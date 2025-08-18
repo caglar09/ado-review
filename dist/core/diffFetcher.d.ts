@@ -36,13 +36,14 @@ export declare class DiffFetcher {
     private errorHandler;
     constructor(adoClient: ADOClient, gitManager: GitManager, logger: Logger, errorHandler: ErrorHandler);
     /**
-     * Fetch pull request diff using iteration changes API
+     * Fetch pull request diff using final diff API
+     * This gets only the net changes after all commits are applied
      */
     fetchPullRequestDiff(pullRequestId: number, workingDirectory?: string): Promise<PullRequestDiff>;
     /**
-     * Process individual file change
+     * Process individual file change from final diff
      */
-    private processFileChange;
+    private processFinalDiffChange;
     /**
      * Map ADO change type to our change type
      */
@@ -57,11 +58,6 @@ export declare class DiffFetcher {
     /**
      * Create real diff using Azure DevOps API
      */
-    private createRealDiff;
-    /**
-     * Generate unified diff format
-     */
-    private generateUnifiedDiff;
     private createBasicDiff;
     /**
      * Parse diff content into hunks

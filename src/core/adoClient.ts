@@ -507,6 +507,64 @@ export class ADOClient {
   }
 
   /**
+   * Get final diff between source and target commits of a PR
+   * This returns only the net changes after all commits are applied
+   */
+  public async getPullRequestFinalDiff(
+    pullRequestId: number
+  ): Promise<any> {
+    try {
+      this.logger.debug(`Fetching final diff for PR ${pullRequestId}`);
+      
+      // Get PR iterations to get the final source commit
+      
+      // Get the latest iteration to get the final source commit
+      const iterations = await this.getPullRequestIterations(pullRequestId);
+      const latestIteration = iterations[iterations.length - 1];
+      
+      if (!latestIteration) {
+        throw new Error('No iterations found for PR');
+      }
+      
+      const sourceCommitId = latestIteration.sourceRefCommit.commitId;
+      const targetCommitId = latestIteration.targetRefCommit.commitId;
+      
+      this.logger.debug(`Getting diff between ${targetCommitId} and ${sourceCommitId}`);
+      
+      // Use the diffs API to get the final diff
+      const response = await this.client.get(
+        `/git/repositories/${this.repository}/diffs/commits`,
+        {
+          params: {
+            'api-version': '7.0',
+            baseVersionDescriptor: `${targetCommitId}`,
+            targetVersionDescriptor: `${sourceCommitId}`,
+            baseVersionType: 'commit',
+            targetVersionType: 'commit'
+          }
+        }
+      );
+      
+      this.logger.debug(`Successfully fetched final diff for PR ${pullRequestId}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error fetching final diff for PR ${pullRequestId}:`, error);
+      throw this.errorHandler.createFromHttpResponse(
+        {
+          status: (error as any).response?.status || 500,
+          statusText: (error as any).response?.statusText || 'Unknown Error',
+          data: (error as any).response?.data
+        },
+        {
+          operation: 'getPullRequestFinalDiff',
+          component: 'ADOClient',
+          metadata: { pullRequestId }
+        }
+      );
+    }
+  }
+
+  /**
    * Get file content from repository at specific commit
    */
   public async getFileContent(

@@ -134,6 +134,11 @@ export declare class ADOClient {
      */
     getPullRequestStatuses(pullRequestId: number, iterationId?: number): Promise<any[]>;
     /**
+     * Get final diff between source and target commits of a PR
+     * This returns only the net changes after all commits are applied
+     */
+    getPullRequestFinalDiff(pullRequestId: number): Promise<any>;
+    /**
      * Get file content from repository at specific commit
      */
     getFileContent(filePath: string, commitId: string): Promise<string>;

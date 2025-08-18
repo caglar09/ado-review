@@ -52,71 +52,69 @@ export class DiffFetcher {
   }
 
   /**
-   * Fetch pull request diff using iteration changes API
+   * Fetch pull request diff using final diff API
+   * This gets only the net changes after all commits are applied
    */
   public async fetchPullRequestDiff(
     pullRequestId: number,
     workingDirectory?: string
   ): Promise<PullRequestDiff> {
     try {
-      this.logger.info(`Fetching diff for PR ${pullRequestId}`);
+      this.logger.info(`Fetching final diff for PR ${pullRequestId}`);
 
-      // Get PR iterations
+      // Get the final diff between source and target commits
+      const finalDiffData = await this.adoClient.getPullRequestFinalDiff(pullRequestId);
+      
+      // Get PR iterations for commit info
       const iterations = await this.adoClient.getPullRequestIterations(pullRequestId);
       if (iterations.length === 0) {
         throw new Error('No iterations found for pull request');
       }
 
-      // Get the latest iteration
       const latestIteration = iterations[iterations.length - 1];
       if (!latestIteration) {
         throw new Error('No valid iteration found for pull request');
       }
-      this.logger.debug(`Using iteration ${latestIteration.id} for diff`);
 
-      // Get file changes from the latest iteration
-      const fileChanges = await this.adoClient.getIterationChanges(
-        pullRequestId,
-        latestIteration.id
-      );
+      this.logger.debug(`Processing final diff with ${finalDiffData.changes?.length || 0} file changes`);
 
-      this.logger.debug(`Found ${fileChanges.length} file changes`);
-
-      // Process each file change
+      // Process each file change from final diff
       const fileDiffs: FileDiff[] = [];
       let totalAddedLines = 0;
       let totalDeletedLines = 0;
 
-      for (const fileChange of fileChanges) {
-        if (fileChange.item.isFolder) {
-          continue; // Skip folders
-        }
+      if (finalDiffData.changes) {
+        for (const change of finalDiffData.changes) {
+          if (change.item?.isFolder) {
+            continue; // Skip folders
+          }
 
-        try {
-          const fileDiff = await this.processFileChange(
-            fileChange,
-            latestIteration,
-            workingDirectory
-          );
+          try {
+            const fileDiff = await this.processFinalDiffChange(
+              change,
+              latestIteration,
+              workingDirectory
+            );
           
-          if (fileDiff) {
-            fileDiffs.push(fileDiff);
-            
-            // Count lines
-            for (const hunk of fileDiff.hunks) {
-              const lines = hunk.content.split('\n');
-              for (const line of lines) {
-                if (line.startsWith('+') && !line.startsWith('+++')) {
-                  totalAddedLines++;
-                } else if (line.startsWith('-') && !line.startsWith('---')) {
-                  totalDeletedLines++;
+            if (fileDiff) {
+              fileDiffs.push(fileDiff);
+              
+              // Count lines
+              for (const hunk of fileDiff.hunks) {
+                const lines = hunk.content.split('\n');
+                for (const line of lines) {
+                  if (line.startsWith('+') && !line.startsWith('+++')) {
+                    totalAddedLines++;
+                  } else if (line.startsWith('-') && !line.startsWith('---')) {
+                    totalDeletedLines++;
+                  }
                 }
               }
             }
+          } catch (error) {
+            this.logger.warn(`Failed to process file ${change.item?.path}: ${(error as Error).message}`);
+            // Continue with other files
           }
-        } catch (error) {
-          this.logger.warn(`Failed to process file ${fileChange.item.path}: ${(error as Error).message}`);
-          // Continue with other files
         }
       }
 
@@ -153,23 +151,23 @@ export class DiffFetcher {
   }
 
   /**
-   * Process individual file change
+   * Process individual file change from final diff
    */
-  private async processFileChange(
-    fileChange: FileChange,
+  private async processFinalDiffChange(
+    change: any,
     iteration: PullRequestIteration,
-    workingDirectory?: string
+    _workingDirectory?: string
   ): Promise<FileDiff | null> {
-    const filePath = fileChange.item.path;
-    
-    this.logger.debug(`Processing file change: ${filePath} (${fileChange.changeType})`);
+    const filePath = change.item?.path;
+    if (!filePath) {
+      return null;
+    }
 
-    // Determine change type
-    const changeType = this.mapChangeType(fileChange.changeType);
-    
-    // Check if file is binary
-    const isBinary = this.isBinaryFile(filePath);
-    const isText = !isBinary;
+    this.logger.debug(`Processing final diff change for file: ${filePath}`);
+
+    const changeType = this.mapChangeType(change.changeType || 'edit');
+    const isText = !this.isBinaryFile(filePath);
+    const isBinary = !isText;
 
     if (isBinary) {
       this.logger.debug(`Skipping binary file: ${filePath}`);
@@ -182,46 +180,41 @@ export class DiffFetcher {
       };
     }
 
-    // Get diff content
-    let diffContent = '';
-    
     try {
-      // Try to get actual file contents from Azure DevOps API
-      diffContent = await this.createRealDiff(fileChange, iteration);
-    } catch (error) {
-      this.logger.warn(`Failed to get real diff for ${filePath}: ${(error as Error).message}`);
-      
-      if (workingDirectory) {
-        // Use git to get diff if working directory is available
-        try {
-          diffContent = await this.gitManager.getDiff(
-            workingDirectory,
-            iteration.targetRefCommit.commitId,
-            iteration.sourceRefCommit.commitId,
-            filePath
-          );
-        } catch (gitError) {
-          this.logger.warn(`Failed to get git diff for ${filePath}: ${(gitError as Error).message}`);
-          // Fall back to basic diff representation
-          diffContent = this.createBasicDiff(fileChange, iteration);
-        }
+      // Use the diff content from the final diff API response
+      let diffContent = '';
+      if (change.hunks && Array.isArray(change.hunks)) {
+        // Process hunks from final diff
+        diffContent = change.hunks.map((hunk: any) => {
+          const header = `@@ -${hunk.originalStart},${hunk.originalLength} +${hunk.modifiedStart},${hunk.modifiedLength} @@`;
+          const lines = hunk.lines?.map((line: any) => {
+            const prefix = line.changeType === 'add' ? '+' : line.changeType === 'delete' ? '-' : ' ';
+            return prefix + line.line;
+          }).join('\n') || '';
+          return header + '\n' + lines;
+        }).join('\n');
       } else {
-        // Fall back to basic diff representation
-        diffContent = this.createBasicDiff(fileChange, iteration);
+        // Fallback to basic diff if hunks are not available
+         diffContent = this.createBasicDiff({ item: change.item, changeType: change.changeType }, iteration);
       }
+
+      const hunks = this.parseDiffHunks(diffContent, filePath);
+
+      return {
+        filePath,
+        changeType,
+        oldPath: change.originalPath,
+        hunks,
+        isText: true,
+        isBinary: false
+      };
+    } catch (error) {
+      this.logger.warn(`Failed to create diff for ${filePath}: ${(error as Error).message}`);
+      return null;
     }
-
-    // Parse diff into hunks
-    const hunks = this.parseDiffHunks(diffContent, filePath);
-
-    return {
-      filePath,
-      changeType,
-      hunks,
-      isText,
-      isBinary: false
-    };
   }
+
+
 
   /**
    * Map ADO change type to our change type
@@ -265,89 +258,9 @@ export class DiffFetcher {
   /**
    * Create real diff using Azure DevOps API
    */
-  private async createRealDiff(fileChange: FileChange, iteration: PullRequestIteration): Promise<string> {
-    const filePath = fileChange.item.path;
-    const changeType = fileChange.changeType.toLowerCase();
-    
-    this.logger.debug(`Creating real diff for ${filePath} (${changeType})`);
-    
-    let oldContent = '';
-    let newContent = '';
-    
-    // Get file contents from both commits
-    try {
-      if (changeType !== 'add') {
-        oldContent = await this.adoClient.getFileContent(filePath, iteration.targetRefCommit.commitId);
-      }
-      
-      if (changeType !== 'delete') {
-        newContent = await this.adoClient.getFileContent(filePath, iteration.sourceRefCommit.commitId);
-      }
-    } catch (error) {
-      this.logger.warn(`Failed to fetch file contents for ${filePath}: ${(error as Error).message}`);
-      throw error;
-    }
-    
-    // Generate unified diff
-    return this.generateUnifiedDiff(filePath, oldContent, newContent, iteration);
-  }
 
-  /**
-   * Generate unified diff format
-   */
-  private generateUnifiedDiff(
-    filePath: string,
-    oldContent: string,
-    newContent: string,
-    iteration: PullRequestIteration
-  ): string {
-    const oldLines = oldContent ? oldContent.split('\n') : [];
-    const newLines = newContent ? newContent.split('\n') : [];
-    
-    let diff = `diff --git a/${filePath} b/${filePath}\n`;
-    diff += `index ${iteration.targetRefCommit.commitId.substring(0, 7)}..${iteration.sourceRefCommit.commitId.substring(0, 7)}\n`;
-    
-    if (!oldContent && newContent) {
-      // File added
-      diff += `--- /dev/null\n`;
-      diff += `+++ b/${filePath}\n`;
-      diff += `@@ -0,0 +1,${newLines.length} @@\n`;
-      for (const line of newLines) {
-        diff += `+${line}\n`;
-      }
-    } else if (oldContent && !newContent) {
-      // File deleted
-      diff += `--- a/${filePath}\n`;
-      diff += `+++ /dev/null\n`;
-      diff += `@@ -1,${oldLines.length} +0,0 @@\n`;
-      for (const line of oldLines) {
-        diff += `-${line}\n`;
-      }
-    } else {
-      // File modified - create a simple diff
-      diff += `--- a/${filePath}\n`;
-      diff += `+++ b/${filePath}\n`;
-      
-      // For simplicity, show all old lines as removed and all new lines as added
-      // A more sophisticated diff algorithm could be implemented here
-      const maxLines = Math.max(oldLines.length, newLines.length);
-      if (maxLines > 0) {
-        diff += `@@ -1,${oldLines.length} +1,${newLines.length} @@\n`;
-        
-        // Show removed lines
-        for (const line of oldLines) {
-          diff += `-${line}\n`;
-        }
-        
-        // Show added lines
-        for (const line of newLines) {
-          diff += `+${line}\n`;
-        }
-      }
-    }
-    
-    return diff;
-  }
+
+
 
   private createBasicDiff(fileChange: FileChange, iteration: PullRequestIteration): string {
     const filePath = fileChange.item.path;
