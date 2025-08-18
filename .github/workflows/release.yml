@@ -1,0 +1,128 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+      - main
+
+jobs:
+  release:
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+        continue-on-error: false
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+      
+      - name: Bump version (patch)
+        id: bump_version
+        run: |
+          npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+      
+      - name: Commit version bump
+        run: |
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to v${{ steps.bump_version.outputs.new }}"
+      
+      - name: Create Git tag
+        run: |
+          git tag -a "v${{ steps.bump_version.outputs.new }}" -m "Release v${{ steps.bump_version.outputs.new }}"
+      
+      - name: Push changes and tags
+        run: |
+          git push origin ${{ github.ref_name }}
+          git push origin "v${{ steps.bump_version.outputs.new }}"
+      
+      - name: Create release package
+        run: |
+          mkdir -p release-assets
+          npm pack
+          mv *.tgz release-assets/
+          
+          # Create a zip file with built assets
+          zip -r release-assets/ado-review-cli-v${{ steps.bump_version.outputs.new }}.zip dist/ package.json README.md
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # Create changelog
+          CHANGELOG="## What's Changed\n\n$COMMITS\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...v${{ steps.bump_version.outputs.new }}"
+          
+          # Save to file for GitHub Release
+          echo -e "$CHANGELOG" > CHANGELOG.md
+          
+          # Set output for GitHub Release
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.bump_version.outputs.new }}
+          name: Release v${{ steps.bump_version.outputs.new }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/ado-review-cli-v${{ steps.bump_version.outputs.new }}.zip
+            release-assets/ado-review-cli-${{ steps.bump_version.outputs.new }}.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify success
+        run: |
+          echo "✅ Successfully released version v${{ steps.bump_version.outputs.new }}"
+          echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.bump_version.outputs.new }}"

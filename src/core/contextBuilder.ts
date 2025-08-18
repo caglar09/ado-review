@@ -81,7 +81,7 @@ export class ContextBuilder {
         projectGuidelines,
         reviewRules,
         diffs,
-        customPromptTemplate: options.customPromptTemplate,
+        ...(options.customPromptTemplate && { customPromptTemplate: options.customPromptTemplate }),
         metadata
       };
       

@@ -656,6 +656,67 @@ ADO_REVIEW_LOG_LEVEL=debug ado-review review --pr-url "..." --verbose
 ado-review review --pr-url "..." --keep-workdir --tmp-dir "./debug-workspace"
 ```
 
+## 🔄 CI/CD ve Otomatik Release
+
+### GitHub Actions Workflow
+
+Proje, **GitHub Actions** kullanarak otomatik versiyonlama ve release sürecini yönetir. Master branch'ine yapılan her merge işleminde:
+
+1. **Otomatik Tetikleme**: Master branch'ine push veya PR merge
+2. **Test ve Build**: Projenin test edilmesi ve build edilmesi
+3. **Semantik Versiyonlama**: Patch seviyesinde otomatik versiyon artışı (SemVer)
+4. **Git Tag**: Yeni versiyon için otomatik tag oluşturma
+5. **GitHub Release**: Otomatik release oluşturma ve asset yükleme
+6. **Changelog**: Commit geçmişinden otomatik changelog üretimi
+
+### Workflow Özellikleri
+
+```yaml
+# .github/workflows/release.yml
+name: Auto Release
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    types: [closed]
+    branches: [master, main]
+```
+
+**Oluşturulan Assets:**
+- **NPM Package** (`.tgz`): `npm pack` ile oluşturulan paket
+- **Distribution Bundle** (`.zip`): Build edilmiş dosyalar ve dokümantasyon
+- **Otomatik Changelog**: Commit geçmişinden üretilen değişiklik listesi
+
+### Versiyonlama Stratejisi
+
+- **Patch Increment**: Her release'de patch versiyon otomatik artırılır
+- **SemVer Uyumlu**: `1.0.0` → `1.0.1` → `1.0.2` formatında
+- **Git Tag**: Her versiyon için `v1.0.1` formatında tag
+- **Commit Messages**: `chore: bump version to v1.0.1` formatında
+
+### Manuel Release
+
+Eğer manuel olarak farklı bir versiyon artışı yapmak isterseniz:
+
+```bash
+# Minor versiyon artışı
+npm version minor
+git push origin master --tags
+
+# Major versiyon artışı
+npm version major
+git push origin master --tags
+```
+
+### Release Asset'leri
+
+Her release'de şu dosyalar otomatik olarak oluşturulur:
+
+- `ado-review-cli-v{version}.tgz` - NPM paketi
+- `ado-review-cli-v{version}.zip` - Distribution bundle
+- Otomatik changelog ile release notları
+
 ## 🤝 Katkıda Bulunma
 
 ### Katkı Süreci

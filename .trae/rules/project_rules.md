@@ -487,3 +487,132 @@ The logging system supports:
 - Console output with appropriate levels
 - File-based logging for debugging
 - Structured logging with context information
+
+## 15. CI/CD Pipeline ve Otomatik Release
+
+### GitHub Actions Workflow
+
+Proje, otomatik versiyonlama ve release sürecini yönetmek için GitHub Actions kullanır. Workflow dosyası `.github/workflows/release.yml` konumunda bulunur.
+
+### Workflow Tetikleme Koşulları
+
+1. **Master/Main Branch Push**: Doğrudan master branch'ine push işlemi
+2. **Pull Request Merge**: Master/main branch'ine merge edilen PR'lar
+
+### Otomatik Release Süreci
+
+#### 1. Tetikleme ve Hazırlık
+- Workflow, master branch'ine yapılan değişikliklerde otomatik tetiklenir
+- Ubuntu latest runner üzerinde çalışır
+- Node.js 18 ve npm cache kurulumu yapılır
+
+#### 2. Test ve Build
+- `npm ci` ile bağımlılıklar yüklenir
+- `npm test` ile testler çalıştırılır (başarısız olursa workflow durur)
+- `npm run build` ile proje build edilir
+
+#### 3. Semantik Versiyonlama
+- Mevcut versiyon `package.json`'dan okunur
+- `npm version patch` ile patch seviyesinde versiyon artışı yapılır
+- SemVer kurallarına uygun olarak `1.0.0` → `1.0.1` → `1.0.2` formatında
+
+#### 4. Git İşlemleri
+- Versiyon değişikliği commit edilir: `chore: bump version to v{version}`
+- Git tag oluşturulur: `v{version}` formatında
+- Değişiklikler ve tag'ler remote repository'ye push edilir
+
+#### 5. Release Asset'leri Oluşturma
+- **NPM Package**: `npm pack` ile `.tgz` dosyası oluşturulur
+- **Distribution Bundle**: Build edilmiş dosyalar, package.json ve README.md ile `.zip` dosyası oluşturulur
+- Asset'ler `release-assets/` klasörüne yerleştirilir
+
+#### 6. Changelog Üretimi
+- Son tag'den bu yana yapılan commit'ler otomatik olarak toplanır
+- Merge commit'ler hariç tutulur
+- Commit formatı: `- {commit message} ({short hash})`
+- GitHub karşılaştırma linki eklenir
+
+#### 7. GitHub Release
+- `softprops/action-gh-release@v1` action'ı kullanılır
+- Release başlığı: `Release v{version}`
+- Otomatik üretilen changelog release açıklamasına eklenir
+- NPM paketi ve distribution bundle asset olarak yüklenir
+
+### Workflow Özellikleri
+
+#### Güvenlik
+- `contents: write` ve `pull-requests: write` izinleri
+- `GITHUB_TOKEN` kullanarak güvenli API erişimi
+
+#### Hata Yönetimi
+- Test başarısızlığında workflow durur
+- Her adım için uygun hata kontrolü
+- Başarılı tamamlanma bildirimi
+
+#### Performance
+- NPM cache kullanımı
+- Sadece gerekli dosyaların işlenmesi
+- Efficient asset oluşturma
+
+### Manuel Versiyon Yönetimi
+
+Otomatik patch artışı dışında manuel versiyon değişiklikleri:
+
+```bash
+# Minor versiyon artışı (1.0.0 → 1.1.0)
+npm version minor
+git push origin master --tags
+
+# Major versiyon artışı (1.0.0 → 2.0.0)
+npm version major
+git push origin master --tags
+```
+
+### Workflow Dosya Yapısı
+
+```yaml
+# .github/workflows/release.yml
+name: Auto Release
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    types: [closed]
+    branches: [master, main]
+
+jobs:
+  release:
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+```
+
+### Çıktılar ve Asset'ler
+
+Her başarılı release'de oluşturulan dosyalar:
+
+1. **ado-review-cli-v{version}.tgz**: NPM paketi
+2. **ado-review-cli-v{version}.zip**: Distribution bundle
+3. **Git Tag**: `v{version}` formatında
+4. **GitHub Release**: Changelog ile birlikte
+5. **Commit**: Versiyon artışı için otomatik commit
+
+### Geliştirme Kuralları
+
+#### Commit Mesajları
+- Conventional Commits formatı önerilir
+- Changelog'da anlamlı görünüm için açıklayıcı mesajlar
+- Merge commit'ler changelog'dan otomatik hariç tutulur
+
+#### Branch Stratejisi
+- Master/main branch production-ready kod içerir
+- Feature branch'ler PR ile merge edilir
+- Merge sonrası otomatik release tetiklenir
+
+#### Test Gereksinimleri
+- Tüm testler geçmeli (workflow requirement)
+- Build başarılı olmalı
+- Lint kurallarına uygunluk önerilir
