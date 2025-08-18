@@ -1,6 +1,6 @@
 {
   "name": "ado-review-cli",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Azure DevOps PR Review CLI - AI Agent supported CLI tool for automated Pull Request reviews",
   "main": "dist/cli/index.js",
   "bin": {
