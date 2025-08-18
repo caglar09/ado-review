@@ -2,7 +2,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import path from 'path';
+import path, { join } from 'path';
+import { readFileSync } from 'fs';
 import { Logger } from '../core/logger.js';
 import { ErrorHandler } from '../core/errorHandler.js';
 import { ReviewOrchestrator } from '../core/reviewOrchestrator.js';
@@ -14,11 +15,15 @@ const logger = new Logger();
 const errorHandler = new ErrorHandler(logger);
 const configLoader = new ConfigLoader(logger, errorHandler);
 
+// Read version from package.json
+const packageJsonPath = join(__dirname, '../../package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+
 // CLI version and description
 program
   .name('ado-review')
   .description('Azure DevOps PR Review CLI - AI Agent supported CLI tool for automated Pull Request reviews')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // Main review command
 program

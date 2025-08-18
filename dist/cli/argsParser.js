@@ -8,6 +8,7 @@ const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 class ArgsParser {
+    logger;
     constructor(logger) {
         this.logger = logger;
     }

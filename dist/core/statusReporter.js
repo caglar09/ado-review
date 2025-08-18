@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StatusReporter = void 0;
 class StatusReporter {
+    logger;
+    errorHandler;
+    adoClient;
+    defaultOptions;
     constructor(logger, errorHandler, adoClient) {
         this.logger = logger;
         this.errorHandler = errorHandler;

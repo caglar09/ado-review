@@ -39,6 +39,8 @@ const path = __importStar(require("path"));
 const yaml = __importStar(require("js-yaml"));
 const glob_1 = require("glob");
 class RulesLoader {
+    logger;
+    errorHandler;
     constructor(logger, errorHandler) {
         this.logger = logger;
         this.errorHandler = errorHandler;

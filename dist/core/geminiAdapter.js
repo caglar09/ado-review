@@ -39,6 +39,10 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const os = __importStar(require("os"));
 class GeminiAdapter {
+    logger;
+    errorHandler;
+    tempDir;
+    defaultTimeout;
     constructor(logger, errorHandler, defaultTimeout = 30000) {
         this.logger = logger;
         this.errorHandler = errorHandler;

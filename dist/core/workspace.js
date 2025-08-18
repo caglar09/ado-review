@@ -8,11 +8,14 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 class Workspace {
+    logger;
+    errorHandler;
+    workspacePath = null;
+    options;
+    createdFiles = new Set();
+    createdDirs = new Set();
+    cleanupHandlers = [];
     constructor(logger, errorHandler, options = {}) {
-        this.workspacePath = null;
-        this.createdFiles = new Set();
-        this.createdDirs = new Set();
-        this.cleanupHandlers = [];
         this.logger = logger;
         this.errorHandler = errorHandler;
         this.options = {

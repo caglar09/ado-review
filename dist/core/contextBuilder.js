@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContextBuilder = void 0;
 class ContextBuilder {
+    logger;
+    errorHandler;
     constructor(logger, errorHandler) {
         this.logger = logger;
         this.errorHandler = errorHandler;

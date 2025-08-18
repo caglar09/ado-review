@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewPlanner = void 0;
 class ReviewPlanner {
+    logger;
+    errorHandler;
+    heuristics;
     constructor(logger, errorHandler) {
         this.logger = logger;
         this.errorHandler = errorHandler;

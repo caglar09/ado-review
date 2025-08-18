@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiffFetcher = void 0;
 class DiffFetcher {
+    adoClient;
+    gitManager;
+    logger;
+    errorHandler;
     constructor(adoClient, gitManager, logger, errorHandler) {
         this.adoClient = adoClient;
         this.gitManager = gitManager;

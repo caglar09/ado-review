@@ -15,6 +15,9 @@ var ExitCode;
     ExitCode[ExitCode["INTERNAL_ERROR"] = 5] = "INTERNAL_ERROR";
 })(ExitCode || (exports.ExitCode = ExitCode = {}));
 class ReviewError extends Error {
+    code;
+    context;
+    isRetryable;
     constructor(message, code = ExitCode.GENERAL_ERROR, context, isRetryable = false) {
         super(message);
         this.name = 'ReviewError';
@@ -32,6 +35,8 @@ class UserError extends ReviewError {
 }
 exports.UserError = UserError;
 class APIError extends ReviewError {
+    statusCode;
+    response;
     constructor(message, statusCode, response, context, isRetryable = false) {
         super(message, ExitCode.API_ERROR, context, isRetryable);
         this.name = 'APIError';
@@ -51,8 +56,9 @@ class InternalError extends ReviewError {
 }
 exports.InternalError = InternalError;
 class ErrorHandler {
+    logger;
+    errorCounts = new Map();
     constructor(logger) {
-        this.errorCounts = new Map();
         this.logger = logger;
     }
     /**

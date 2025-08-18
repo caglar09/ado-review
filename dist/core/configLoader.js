@@ -38,8 +38,11 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const yaml = __importStar(require("js-yaml"));
 class ConfigLoader {
+    logger;
+    errorHandler;
+    config = null;
+    configPath;
     constructor(logger, errorHandler) {
-        this.config = null;
         this.logger = logger;
         this.errorHandler = errorHandler;
         // Find config file path relative to the module

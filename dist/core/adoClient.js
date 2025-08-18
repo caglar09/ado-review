@@ -6,6 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ADOClient = void 0;
 const axios_1 = __importDefault(require("axios"));
 class ADOClient {
+    client;
+    logger;
+    errorHandler;
+    organization;
+    project;
+    repository;
     constructor(organization, project, repository, personalAccessToken, logger, errorHandler) {
         this.organization = organization;
         this.project = project;

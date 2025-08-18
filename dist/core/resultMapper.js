@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResultMapper = void 0;
 class ResultMapper {
+    logger;
+    errorHandler;
+    defaultOptions;
     constructor(logger, errorHandler) {
         this.logger = logger;
         this.errorHandler = errorHandler;

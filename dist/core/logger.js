@@ -9,6 +9,10 @@ const chalk_1 = __importDefault(require("chalk"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 class Logger {
+    winston;
+    maskSecrets;
+    secretPatterns;
+    workspaceDir;
     constructor(options = {}) {
         this.maskSecrets = options.maskSecrets ?? true;
         this.workspaceDir = options.workspaceDir;

@@ -21,6 +21,23 @@ const statusReporter_1 = require("./statusReporter");
 const workspace_1 = require("./workspace");
 const chalk_1 = __importDefault(require("chalk"));
 class ReviewOrchestrator {
+    logger;
+    errorHandler;
+    options;
+    argsParser;
+    configLoader;
+    // Core components
+    adoClient;
+    gitManager;
+    diffFetcher;
+    rulesLoader;
+    contextBuilder;
+    reviewPlanner;
+    geminiAdapter;
+    resultMapper;
+    commenter;
+    statusReporter;
+    workspace;
     constructor(logger, options) {
         this.logger = logger;
         this.errorHandler = new errorHandler_1.ErrorHandler(logger);
@@ -30,6 +47,7 @@ class ReviewOrchestrator {
         // Store raw options for later parsing
         this.rawOptions = options;
     }
+    rawOptions;
     /**
      * Main orchestration method
      */
