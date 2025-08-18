@@ -57,6 +57,12 @@
     "typescript": "^5.3.2",
     "rimraf": "^5.0.5"
   },
+  "files": [
+    "dist/**/*",
+    "examples/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },
