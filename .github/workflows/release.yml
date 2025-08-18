@@ -108,6 +108,26 @@ jobs:
           echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       
+      - name: Setup NPM Registry
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+      
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Setup Yarn Registry
+        run: |
+          yarn config set npmRegistryServer https://registry.npmjs.org
+          yarn config set npmAuthToken ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish to Yarn
+        run: yarn npm publish --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -126,3 +146,5 @@ jobs:
         run: |
           echo "✅ Successfully released version v${{ steps.bump_version.outputs.new }}"
           echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.bump_version.outputs.new }}"
+          echo "📦 NPM Package: https://www.npmjs.com/package/ado-review-cli"
+          echo "🧶 Yarn Package: https://yarnpkg.com/package/ado-review-cli"
