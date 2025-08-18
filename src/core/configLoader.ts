@@ -119,7 +119,12 @@ export class ConfigLoader {
     
     // Find config file path relative to the module
     const moduleDir = path.dirname(path.dirname(__dirname));
-    this.configPath = path.join(moduleDir, 'src', 'config', 'defaults.yaml');
+    
+    // Try dist/config first (for built package), then src/config (for development)
+    const distConfigPath = path.join(moduleDir, 'dist', 'config', 'defaults.yaml');
+    const srcConfigPath = path.join(moduleDir, 'src', 'config', 'defaults.yaml');
+    
+    this.configPath = fs.existsSync(distConfigPath) ? distConfigPath : srcConfigPath;
     
     this.logger.debug(`Config path: ${this.configPath}`);
   }
