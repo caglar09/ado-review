@@ -10,6 +10,8 @@ export interface GeminiConfig {
     timeout?: number;
     retryAttempts?: number;
     retryDelay?: number;
+    maxBackoffDelay?: number;
+    enableRateLimitHandling?: boolean;
 }
 export interface GeminiRequest {
     prompt: string;
@@ -62,6 +64,18 @@ export declare class GeminiAdapter {
      * Call Gemini CLI with the given request
      */
     private callGemini;
+    /**
+     * Check if error is a rate limit error (429)
+     */
+    private isRateLimitError;
+    /**
+     * Calculate exponential backoff delay with jitter
+     */
+    private calculateBackoffDelay;
+    /**
+     * Sleep for specified milliseconds
+     */
+    private sleep;
     /**
      * Execute Gemini CLI command with stdin approach
      */

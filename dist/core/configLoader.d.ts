@@ -107,9 +107,14 @@ export declare class ConfigLoader {
     private errorHandler;
     private config;
     private configPath;
+    private userConfigPath;
     constructor(logger: Logger, errorHandler: ErrorHandler);
     /**
-     * Load configuration from defaults.yaml
+     * Deep merge user configuration with default configuration
+     */
+    private mergeConfigs;
+    /**
+     * Load configuration from defaults.yaml and merge with .adorevrc.yaml if present
      */
     loadConfig(): Promise<AppConfig>;
     /**

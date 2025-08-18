@@ -48,6 +48,11 @@ gemini:
   topK: 40
   # Default timeout for Gemini CLI calls (in milliseconds)
   timeout: 120000
+  # Retry configuration for API failures
+  retryAttempts: 5
+  retryDelay: 2000
+  maxBackoffDelay: 60000
+  enableRateLimitHandling: true
 
 # Rate Limiting Configuration
 rateLimit:

@@ -1,0 +1,15 @@
+# Test configuration for .adorevrc.yaml support
+gemini:
+  defaultModel: "gemini-1.5-pro-002"
+  temperature: 0.2
+
+logging:
+  level: "debug"
+  console:
+    colors: true
+    timestamps: true
+
+review:
+  severityThreshold: "info"
+  format: "table"
+  maxTableFindings: 15

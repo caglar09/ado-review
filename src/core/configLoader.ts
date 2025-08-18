@@ -112,8 +112,10 @@ export class ConfigLoader {
   private errorHandler: ErrorHandler;
   private config: AppConfig | null = null;
   private configPath: string;
+  private userConfigPath: string;
+  private workspaceConfigPath?: string;
 
-  constructor(logger: Logger, errorHandler: ErrorHandler) {
+  constructor(logger: Logger, errorHandler: ErrorHandler, workspaceDir?: string) {
     this.logger = logger;
     this.errorHandler = errorHandler;
     
@@ -126,11 +128,51 @@ export class ConfigLoader {
     
     this.configPath = fs.existsSync(distConfigPath) ? distConfigPath : srcConfigPath;
     
-    this.logger.debug(`Config path: ${this.configPath}`);
+    // Look for user config file in workspace first, then in project root
+    if (workspaceDir) {
+      this.workspaceConfigPath = path.join(workspaceDir, '.adorevrc.yaml');
+      this.logger.debug(`Workspace config path: ${this.workspaceConfigPath}`);
+    }
+    this.userConfigPath = path.join(process.cwd(), '.adorevrc.yaml');
+    
+    this.logger.debug(`Default config path: ${this.configPath}`);
+    this.logger.debug(`User config path: ${this.userConfigPath}`);
   }
 
   /**
-   * Load configuration from defaults.yaml
+   * Deep merge user configuration with default configuration
+   */
+  private mergeConfigs(defaultConfig: AppConfig, userConfig: Partial<AppConfig>): AppConfig {
+    const merged = JSON.parse(JSON.stringify(defaultConfig)) as AppConfig;
+    
+    // Helper function to deep merge objects
+    const deepMerge = (target: any, source: any): any => {
+      if (source === null || source === undefined) {
+        return target;
+      }
+      
+      if (typeof source !== 'object' || Array.isArray(source)) {
+        return source;
+      }
+      
+      for (const key in source) {
+        if (source.hasOwnProperty(key)) {
+          if (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
+            target[key] = deepMerge(target[key], source[key]);
+          } else {
+            target[key] = source[key];
+          }
+        }
+      }
+      
+      return target;
+    };
+    
+    return deepMerge(merged, userConfig);
+  }
+
+  /**
+   * Load configuration from defaults.yaml and merge with .adorevrc.yaml if present
    */
   public async loadConfig(): Promise<AppConfig> {
     if (this.config) {
@@ -138,31 +180,88 @@ export class ConfigLoader {
     }
 
     try {
+      // Load default configuration
       if (!fs.existsSync(this.configPath)) {
-        throw new Error(`Configuration file not found: ${this.configPath}`);
+        throw new Error(`Default configuration file not found: ${this.configPath}`);
       }
 
-      const configContent = fs.readFileSync(this.configPath, 'utf-8');
-      const parsedConfig = yaml.load(configContent) as AppConfig;
+      const defaultConfigContent = fs.readFileSync(this.configPath, 'utf-8');
+      const defaultConfig = yaml.load(defaultConfigContent) as AppConfig;
 
-      if (!parsedConfig) {
-        throw new Error('Failed to parse configuration file');
+      if (!defaultConfig) {
+        throw new Error('Failed to parse default configuration file');
       }
 
-      this.config = parsedConfig;
+      // Load user configuration if it exists
+      // Priority: workspace .adorevrc.yaml > project root .adorevrc.yaml
+      let userConfig: Partial<AppConfig> = {};
+      let configSource = 'none';
+      
+      // First, try to load from workspace directory
+      if (this.workspaceConfigPath && fs.existsSync(this.workspaceConfigPath)) {
+        this.logger.debug('Found .adorevrc.yaml in workspace, loading configuration');
+        try {
+          const userConfigContent = fs.readFileSync(this.workspaceConfigPath, 'utf-8');
+          userConfig = yaml.load(userConfigContent) as Partial<AppConfig>;
+          
+          if (!userConfig) {
+            this.logger.warn('Workspace configuration file is empty or invalid, trying project root');
+            userConfig = {};
+          } else {
+            this.logger.debug('Workspace configuration loaded successfully');
+            configSource = 'workspace';
+          }
+        } catch (userError) {
+          this.logger.warn(`Failed to load workspace configuration: ${userError instanceof Error ? userError.message : 'Unknown error'}. Trying project root.`);
+          userConfig = {};
+        }
+      }
+      
+      // If no workspace config found or failed to load, try project root
+      if (configSource === 'none' && fs.existsSync(this.userConfigPath)) {
+        this.logger.debug('Found .adorevrc.yaml in project root, loading configuration');
+        try {
+          const userConfigContent = fs.readFileSync(this.userConfigPath, 'utf-8');
+          userConfig = yaml.load(userConfigContent) as Partial<AppConfig>;
+          
+          if (!userConfig) {
+            this.logger.warn('Project root configuration file is empty or invalid, using defaults only');
+            userConfig = {};
+          } else {
+            this.logger.debug('Project root configuration loaded successfully');
+            configSource = 'project-root';
+          }
+        } catch (userError) {
+          this.logger.warn(`Failed to load project root configuration: ${userError instanceof Error ? userError.message : 'Unknown error'}. Using defaults only.`);
+          userConfig = {};
+        }
+      }
+      
+      if (configSource === 'none') {
+        this.logger.debug('No .adorevrc.yaml found in workspace or project root, using default configuration only');
+      } else {
+        this.logger.info(`Using configuration from: ${configSource}`);
+      }
+
+      // Deep merge user config with default config
+      this.config = this.mergeConfigs(defaultConfig, userConfig);
       
       // Override logging level from environment variable if set
       const envLogLevel = process.env['ADO_REVIEW_LOG_LEVEL'];
-      if (envLogLevel && this.config.logging.levels.includes(envLogLevel)) {
+      if (envLogLevel && this.config?.logging?.levels?.includes(envLogLevel)) {
         this.config.logging.level = envLogLevel;
         this.logger.debug(`Log level overridden by ADO_REVIEW_LOG_LEVEL: ${envLogLevel}`);
-      } else if (envLogLevel) {
+      } else if (envLogLevel && this.config?.logging?.levels) {
         this.logger.warn(`Invalid ADO_REVIEW_LOG_LEVEL value: ${envLogLevel}. Valid values: ${this.config.logging.levels.join(', ')}`);
       }
       
-      this.logger.debug('Configuration loaded successfully');
-      this.logger.debug(`Gemini timeout: ${this.config.gemini.timeout}ms`);
-      this.logger.debug(`Current log level: ${this.config.logging.level}`);
+      this.logger.debug('Configuration loaded and merged successfully');
+      this.logger.debug(`Gemini timeout: ${this.config?.gemini?.timeout}ms`);
+      this.logger.debug(`Current log level: ${this.config?.logging?.level}`);
+      
+      if (!this.config) {
+        throw new Error('Configuration merge failed');
+      }
       
       return this.config;
     } catch (error) {
@@ -171,7 +270,10 @@ export class ConfigLoader {
         { 
           operation: 'loadConfig',
           component: 'ConfigLoader',
-          metadata: { configPath: this.configPath }
+          metadata: { 
+            defaultConfigPath: this.configPath,
+            userConfigPath: this.userConfigPath
+          }
         },
         error instanceof Error ? error : undefined
       );

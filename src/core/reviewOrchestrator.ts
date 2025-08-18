@@ -274,6 +274,12 @@ export class ReviewOrchestrator {
     // Update logger to use workspace directory for logs
     (this.logger as any).workspaceDir = this.workspace.getPath();
     
+    // Reinitialize ConfigLoader with workspace directory to support .adorevrc.yaml in cloned repo
+    const workspacePath = this.workspace.getPath();
+    if (workspacePath) {
+      this.configLoader = new ConfigLoader(this.logger, this.errorHandler, workspacePath);
+    }
+    
     return this.workspace;
   }
 
@@ -327,7 +333,7 @@ export class ReviewOrchestrator {
     if (!prInfo.repository) {
       throw this.errorHandler.createInternalError('PR info does not contain repository information');
     }
-    
+
     // Clone repository to workspace/source directory
     const sourceDir = this.workspace.getSubdirPath('source');
     await this.gitManager.cloneRepository(
@@ -337,7 +343,18 @@ export class ReviewOrchestrator {
         workingDirectory: sourceDir
       }
     );
+
+    // After cloning, reinitialize ConfigLoader to read .adorevrc.yaml from cloned workspace
+    this.logger.debug('Reinitializing ConfigLoader with cloned workspace directory:', sourceDir);
+    this.configLoader = new ConfigLoader(this.logger, this.errorHandler, sourceDir);
     
+    // Reload configuration from the cloned workspace
+    const config = await this.configLoader.loadConfig();
+    this.logger.debug('Reloaded configuration from workspace:', {
+      hasWorkspaceConfig: !!config,
+      configKeys: config ? Object.keys(config) : []
+    });
+
     // Fetch PR diff
     const prDiff = await this.diffFetcher.fetchPullRequestDiff(
       prInfo.pullRequestId,
@@ -440,21 +457,36 @@ export class ReviewOrchestrator {
   }
 
   /**
-   * Execute AI review
+   * Execute AI review with batch processing and rate limiting
    */
   private async executeReview(reviewPlan: any, context: any): Promise<ReviewFinding[]> {
     if (!this.geminiAdapter) {
       throw this.errorHandler.createInternalError('Review components not initialized');
     }
     
-    this.logger.debug('Executing Gemini review with context', {
-      contextType: typeof context,
-      planType: typeof reviewPlan,
-      hasContext: !!context,
-      hasPlan: !!reviewPlan
+    this.logger.debug('Executing Gemini review with plan', {
+      strategy: reviewPlan.strategy,
+      batchCount: reviewPlan.batches?.length || 0,
+      totalHunks: reviewPlan.totalHunks,
+      estimatedTokens: reviewPlan.estimatedTokens
     });
     
-    const reviewResult = await this.geminiAdapter.reviewCode(
+    // Handle single batch strategy
+    if (reviewPlan.strategy === 'single' || !reviewPlan.batches || reviewPlan.batches.length <= 1) {
+      return await this.executeSingleReview(context);
+    }
+    
+    // Handle multiple batch strategy with rate limiting
+    return await this.executeBatchedReview(reviewPlan, context);
+  }
+
+  /**
+   * Execute single review for small PRs
+   */
+  private async executeSingleReview(context: any): Promise<ReviewFinding[]> {
+    this.logger.info('Executing single batch review');
+    
+    const reviewResult = await this.geminiAdapter!.reviewCode(
       context,
       {
         model: this.options.model,
@@ -462,7 +494,412 @@ export class ReviewOrchestrator {
         temperature: 0.1
       }
     );
+    
     return reviewResult.findings;
+  }
+
+  /**
+   * Execute batched review with rate limiting for large PRs
+   */
+  private async executeBatchedReview(reviewPlan: any, baseContext: any): Promise<ReviewFinding[]> {
+    const allFindings: ReviewFinding[] = [];
+    const batches = reviewPlan.batches;
+    const batchDelay = this.calculateBatchDelay(batches.length);
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 3;
+    
+    this.logger.info(`Executing ${batches.length} batches with ${batchDelay}ms delay between requests`);
+    
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      let batchSuccess = false;
+      
+      try {
+        this.logger.info(`Processing batch ${i + 1}/${batches.length}: ${batch.description}`);
+        
+        // Create batch-specific context
+        const batchContext = this.createBatchContext(baseContext, batch);
+        
+        // Execute review for this batch
+        const batchResult = await this.geminiAdapter!.reviewCode(
+          batchContext,
+          {
+            model: this.options.model,
+            maxTokens: Math.min(batch.estimatedTokens * 1.2, this.options.maxContextTokens),
+            temperature: 0.1
+          }
+        );
+        
+        allFindings.push(...batchResult.findings);
+        batchSuccess = true;
+        consecutiveFailures = 0; // Reset failure counter on success
+        
+        this.logger.info(`Batch ${i + 1} completed: ${batchResult.findings.length} findings`);
+        
+        // Apply rate limiting delay between batches (except for the last one)
+        if (i < batches.length - 1) {
+          this.logger.debug(`Waiting ${batchDelay}ms before next batch...`);
+          await this.sleep(batchDelay);
+        }
+        
+      } catch (error) {
+        this.logger.error(`Batch ${i + 1} failed:`, error);
+        consecutiveFailures++;
+        
+        // Try fallback strategies for rate limit errors
+        if (this.isRateLimitError(error)) {
+          batchSuccess = await this.handleRateLimitError(batch, baseContext, i + 1, batches.length, allFindings);
+        } else {
+          // For non-rate-limit errors, try fallback strategies
+          batchSuccess = await this.handleGeneralError(batch, baseContext, i + 1, error, allFindings);
+        }
+        
+        // Check if we should abort due to too many consecutive failures
+        if (consecutiveFailures >= maxConsecutiveFailures) {
+          this.logger.error(`Too many consecutive failures (${consecutiveFailures}), applying emergency fallback`);
+          const emergencyFindings = await this.applyEmergencyFallback(batches.slice(i));
+          allFindings.push(...emergencyFindings);
+          break;
+        }
+      }
+      
+      if (batchSuccess) {
+        consecutiveFailures = 0;
+      }
+    }
+    
+    this.logger.info(`Batched review completed: ${allFindings.length} total findings from ${batches.length} batches`);
+    return allFindings;
+  }
+
+  /**
+   * Handle rate limit errors with multiple fallback strategies
+   */
+  private async handleRateLimitError(
+    batch: any, 
+    baseContext: any, 
+    batchNumber: number, 
+    totalBatches: number, 
+    allFindings: ReviewFinding[]
+  ): Promise<boolean> {
+    const maxRetries = 2;
+    
+    for (let retry = 0; retry < maxRetries; retry++) {
+      const backoffDelay = this.calculateExponentialBackoff(retry + 1);
+      this.logger.warn(`Rate limit hit, backing off for ${backoffDelay}ms (attempt ${retry + 1}/${maxRetries})`);
+      await this.sleep(backoffDelay);
+      
+      try {
+        // Try with reduced context first
+        const reducedBatch = this.createReducedBatch(batch);
+        const batchContext = this.createBatchContext(baseContext, reducedBatch);
+        
+        this.logger.info(`Retrying batch ${batchNumber}/${totalBatches} with reduced context`);
+        const batchResult = await this.geminiAdapter!.reviewCode(
+          batchContext,
+          {
+            model: this.options.model,
+            maxTokens: Math.min(reducedBatch.estimatedTokens * 1.1, this.options.maxContextTokens * 0.8),
+            temperature: 0.1
+          }
+        );
+        
+        allFindings.push(...batchResult.findings);
+        this.logger.info(`Batch ${batchNumber} retry succeeded with reduced context: ${batchResult.findings.length} findings`);
+        return true;
+        
+      } catch (retryError) {
+        this.logger.error(`Batch ${batchNumber} retry ${retry + 1} failed:`, retryError);
+        
+        // If still rate limited, try splitting the batch further
+        if (this.isRateLimitError(retryError) && retry === maxRetries - 1) {
+          return await this.trySplitBatchFallback(batch, baseContext, batchNumber, allFindings);
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Handle general errors with fallback strategies
+   */
+  private async handleGeneralError(
+    batch: any, 
+    baseContext: any, 
+    batchNumber: number, 
+    error: any, 
+    allFindings: ReviewFinding[]
+  ): Promise<boolean> {
+    this.logger.warn(`Attempting fallback for batch ${batchNumber} due to error: ${error.message}`);
+    
+    // Try with simplified context
+    try {
+      const simplifiedBatch = this.createSimplifiedBatch(batch);
+      const batchContext = this.createBatchContext(baseContext, simplifiedBatch);
+      
+      const batchResult = await this.geminiAdapter!.reviewCode(
+        batchContext,
+        {
+          model: this.options.model,
+          maxTokens: Math.min(simplifiedBatch.estimatedTokens, this.options.maxContextTokens * 0.6),
+          temperature: 0.2 // Slightly higher temperature for robustness
+        }
+      );
+      
+      allFindings.push(...batchResult.findings);
+      this.logger.info(`Batch ${batchNumber} fallback succeeded: ${batchResult.findings.length} findings`);
+      return true;
+      
+    } catch (fallbackError) {
+      this.logger.error(`Batch ${batchNumber} fallback failed:`, fallbackError);
+      
+      // Generate basic findings as last resort
+      const basicFindings = this.generateBasicFindings(batch);
+      allFindings.push(...basicFindings);
+      this.logger.warn(`Generated ${basicFindings.length} basic findings for batch ${batchNumber}`);
+      return false;
+    }
+  }
+
+  /**
+   * Try splitting batch into smaller pieces as fallback
+   */
+  private async trySplitBatchFallback(
+    batch: any, 
+    baseContext: any, 
+    batchNumber: number, 
+    allFindings: ReviewFinding[]
+  ): Promise<boolean> {
+    this.logger.info(`Attempting to split batch ${batchNumber} into smaller pieces`);
+    
+    const subBatches = this.splitBatchIntoSmaller(batch, 2); // Split into 2 smaller batches
+    let successCount = 0;
+    
+    for (let j = 0; j < subBatches.length; j++) {
+      try {
+        await this.sleep(3000); // Extra delay for sub-batches
+        
+        const subBatchContext = this.createBatchContext(baseContext, subBatches[j]);
+        const subBatchResult = await this.geminiAdapter!.reviewCode(
+          subBatchContext,
+          {
+            model: this.options.model,
+            maxTokens: Math.min(subBatches[j].estimatedTokens, this.options.maxContextTokens * 0.5),
+            temperature: 0.1
+          }
+        );
+        
+        allFindings.push(...subBatchResult.findings);
+        successCount++;
+        this.logger.info(`Sub-batch ${j + 1}/${subBatches.length} of batch ${batchNumber} succeeded`);
+        
+      } catch (subError) {
+        this.logger.error(`Sub-batch ${j + 1} of batch ${batchNumber} failed:`, subError);
+      }
+    }
+    
+    return successCount > 0;
+  }
+
+  /**
+   * Emergency fallback for multiple consecutive failures
+   */
+  private async applyEmergencyFallback(remainingBatches: any[]): Promise<ReviewFinding[]> {
+    this.logger.warn('Applying emergency fallback strategy');
+    const emergencyFindings: ReviewFinding[] = [];
+    
+    // Generate basic findings for all remaining batches
+    for (const batch of remainingBatches) {
+      const basicFindings = this.generateBasicFindings(batch);
+      emergencyFindings.push(...basicFindings);
+    }
+    
+    this.logger.info(`Emergency fallback generated ${emergencyFindings.length} basic findings`);
+    return emergencyFindings;
+  }
+
+  /**
+   * Create context for a specific batch
+   */
+  private createBatchContext(baseContext: any, batch: any): any {
+    return {
+      ...baseContext,
+      diffHunks: batch.hunks,
+      files: batch.files,
+      batchInfo: {
+        id: batch.id,
+        priority: batch.priority,
+        estimatedTokens: batch.estimatedTokens
+      }
+    };
+  }
+
+  /**
+   * Calculate delay between batches based on batch count
+   */
+  private calculateBatchDelay(batchCount: number): number {
+    // Base delay of 2 seconds, increased for more batches
+    const baseDelay = 2000;
+    const scaleFactor = Math.min(batchCount / 5, 3); // Max 3x scaling
+    return Math.floor(baseDelay * (1 + scaleFactor));
+  }
+
+  /**
+   * Calculate exponential backoff delay for rate limit errors
+   */
+  private calculateExponentialBackoff(attempt: number): number {
+    const baseDelay = 5000; // 5 seconds base
+    const maxDelay = 60000; // 60 seconds max
+    const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
+    return delay + Math.random() * 1000; // Add jitter
+  }
+
+  /**
+   * Check if error is a rate limit error
+   */
+  private isRateLimitError(error: any): boolean {
+    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorCode = error?.code || error?.status;
+    
+    return (
+      errorCode === 429 ||
+      errorMessage.includes('rate limit') ||
+      errorMessage.includes('too many requests') ||
+      errorMessage.includes('quota exceeded') ||
+      errorMessage.includes('resource exhausted')
+    );
+  }
+
+  /**
+   * Sleep for specified milliseconds
+   */
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Create a reduced version of batch with fewer hunks
+   */
+  private createReducedBatch(batch: any): any {
+    const maxHunks = Math.max(1, Math.floor(batch.hunks.length * 0.7)); // Keep 70% of hunks
+    
+    return {
+      ...batch,
+      hunks: batch.hunks.slice(0, maxHunks),
+      estimatedTokens: Math.floor(batch.estimatedTokens * 0.7),
+      description: `${batch.description} (reduced)`
+    };
+  }
+
+  /**
+   * Create a simplified version of batch with essential info only
+   */
+  private createSimplifiedBatch(batch: any): any {
+    const essentialHunks = batch.hunks.filter((hunk: any) => 
+      hunk.type === 'added' || hunk.type === 'modified'
+    ).slice(0, Math.max(1, Math.floor(batch.hunks.length * 0.5)));
+    
+    return {
+      ...batch,
+      hunks: essentialHunks,
+      estimatedTokens: Math.floor(batch.estimatedTokens * 0.5),
+      description: `${batch.description} (simplified)`
+    };
+  }
+
+  /**
+   * Split batch into smaller sub-batches
+   */
+  private splitBatchIntoSmaller(batch: any, splitCount: number): any[] {
+    const hunksPerBatch = Math.max(1, Math.floor(batch.hunks.length / splitCount));
+    const subBatches: any[] = [];
+    
+    for (let i = 0; i < splitCount; i++) {
+      const startIndex = i * hunksPerBatch;
+      const endIndex = i === splitCount - 1 ? batch.hunks.length : (i + 1) * hunksPerBatch;
+      const subHunks = batch.hunks.slice(startIndex, endIndex);
+      
+      if (subHunks.length > 0) {
+        subBatches.push({
+          ...batch,
+          id: `${batch.id}_sub_${i + 1}`,
+          hunks: subHunks,
+          estimatedTokens: Math.floor(batch.estimatedTokens / splitCount),
+          description: `${batch.description} (part ${i + 1}/${splitCount})`
+        });
+      }
+    }
+    
+    return subBatches;
+  }
+
+  /**
+   * Generate basic findings when AI review fails
+   */
+  private generateBasicFindings(batch: any): ReviewFinding[] {
+    const findings: ReviewFinding[] = [];
+    
+    // Generate basic findings based on hunk analysis
+    for (const hunk of batch.hunks) {
+      if (hunk.type === 'added' || hunk.type === 'modified') {
+        // Basic code quality checks
+        const lines = hunk.content.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const lineNumber = hunk.startLine + i;
+          
+          // Check for potential issues
+             if (line.includes('console.log') || line.includes('console.error')) {
+               findings.push({
+                 severity: 'warning',
+                 message: 'Consider removing console statements before production',
+                 file: hunk.filePath,
+                 line: lineNumber,
+                 ruleId: 'no-console',
+                 suggestion: 'Use proper logging framework instead of console statements'
+               });
+             }
+             
+             if (line.includes('TODO') || line.includes('FIXME')) {
+               findings.push({
+                 severity: 'info',
+                 message: 'TODO/FIXME comment found',
+                 file: hunk.filePath,
+                 line: lineNumber,
+                 ruleId: 'todo-fixme',
+                 suggestion: 'Consider addressing this TODO/FIXME item'
+               });
+             }
+             
+             if (line.length > 120) {
+               findings.push({
+                 severity: 'info',
+                 message: 'Line too long (>120 characters)',
+                 file: hunk.filePath,
+                 line: lineNumber,
+                 ruleId: 'max-line-length',
+                 suggestion: 'Consider breaking this line into multiple lines'
+               });
+             }
+        }
+      }
+    }
+    
+    // If no specific findings, add a general review note
+       if (findings.length === 0) {
+         findings.push({
+           severity: 'info',
+           message: 'Code changes reviewed (AI review unavailable)',
+           file: batch.hunks[0]?.filePath || 'unknown',
+           line: 1,
+           ruleId: 'manual-review-required',
+           suggestion: 'Manual code review recommended due to AI service limitations'
+         });
+       }
+    
+    return findings;
   }
 
   /**

@@ -82,30 +82,78 @@ class GeminiAdapter {
      */
     async callGemini(request) {
         const { prompt, config, requestId } = request;
-        try {
-            const timeout = config.timeout || this.defaultTimeout;
-            const result = await this.executeGeminiCommandWithStdin(prompt, timeout);
-            const response = {
-                requestId,
-                content: result.stdout,
-                model: config.model
-            };
-            const usage = this.extractUsageInfo(result.stderr);
-            if (usage) {
-                response.usage = usage;
+        const maxRetries = config.retryAttempts || 3;
+        const baseDelay = config.retryDelay || 1000;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const timeout = config.timeout || this.defaultTimeout;
+                const result = await this.executeGeminiCommandWithStdin(prompt, timeout);
+                const response = {
+                    requestId,
+                    content: result.stdout,
+                    model: config.model
+                };
+                const usage = this.extractUsageInfo(result.stderr);
+                if (usage) {
+                    response.usage = usage;
+                }
+                const finishReason = this.extractFinishReason(result.stderr);
+                if (finishReason) {
+                    response.finishReason = finishReason;
+                }
+                // Log the Gemini response for debugging
+                this.logger.logGeminiResponse(requestId, JSON.stringify(response, null, 2));
+                return response;
             }
-            const finishReason = this.extractFinishReason(result.stderr);
-            if (finishReason) {
-                response.finishReason = finishReason;
+            catch (error) {
+                const errorMessage = error.message;
+                const isRateLimitError = this.isRateLimitError(errorMessage);
+                // Check if it's a timeout error (for future use)
+                // const isTimeoutError = errorMessage.includes('timeout');
+                this.logger.warn(`Attempt ${attempt}/${maxRetries} failed: ${errorMessage}`);
+                // If this is the last attempt, throw the error
+                if (attempt === maxRetries) {
+                    this.logger.error(`All ${maxRetries} attempts failed. Final error: ${errorMessage}`);
+                    throw error;
+                }
+                // Calculate exponential backoff delay
+                const delay = this.calculateBackoffDelay(attempt, baseDelay, isRateLimitError);
+                this.logger.info(`Retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+                await this.sleep(delay);
             }
-            // Log the Gemini response for debugging
-            this.logger.logGeminiResponse(requestId, JSON.stringify(response, null, 2));
-            return response;
         }
-        catch (error) {
-            this.logger.error(`Error when talking to Gemini API: ${error.message}`);
-            throw error;
-        }
+        throw new Error('Unexpected error: retry loop completed without success or failure');
+    }
+    /**
+     * Check if error is a rate limit error (429)
+     */
+    isRateLimitError(errorMessage) {
+        return errorMessage.includes('429') ||
+            errorMessage.includes('rateLimitExceeded') ||
+            errorMessage.includes('Resource exhausted') ||
+            errorMessage.includes('Too Many Requests');
+    }
+    /**
+     * Calculate exponential backoff delay with jitter
+     */
+    calculateBackoffDelay(attempt, baseDelay, isRateLimitError) {
+        // For rate limit errors, use longer delays
+        const multiplier = isRateLimitError ? 2 : 1.5;
+        const maxDelay = isRateLimitError ? 60000 : 30000; // 60s for rate limits, 30s for others
+        // Exponential backoff: baseDelay * multiplier^(attempt-1)
+        let delay = baseDelay * Math.pow(multiplier, attempt - 1);
+        // Cap the delay
+        delay = Math.min(delay, maxDelay);
+        // Add jitter (±25% randomization)
+        const jitter = delay * 0.25 * (Math.random() - 0.5);
+        delay += jitter;
+        return Math.max(delay, baseDelay); // Ensure minimum delay
+    }
+    /**
+     * Sleep for specified milliseconds
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
     /**
      * Execute Gemini CLI command with stdin approach

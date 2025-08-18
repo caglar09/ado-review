@@ -8,21 +8,32 @@ class ReviewPlanner {
     constructor(logger, errorHandler) {
         this.logger = logger;
         this.errorHandler = errorHandler;
-        // Default heuristics
+        // Enhanced heuristics for better handling of large PRs
         this.heuristics = {
-            smallReviewThreshold: 10,
-            mediumReviewThreshold: 50,
-            largeReviewThreshold: 200,
-            maxTokensForSingle: 80000,
-            avgTokensPerHunk: 150,
+            smallReviewThreshold: 3,
+            mediumReviewThreshold: 10,
+            largeReviewThreshold: 25, // Reduced from 200 to handle large PRs better
+            maxTokensForSingle: 20000, // Reduced from 80000 to prevent 429 errors
+            avgTokensPerHunk: 120, // More conservative estimate
             criticalFilePatterns: [
                 '**/*.config.*',
                 '**/package.json',
+                '**/package-lock.json',
+                '**/yarn.lock',
                 '**/tsconfig.json',
                 '**/Dockerfile',
+                '**/docker-compose*.yml',
                 '**/*.yml',
                 '**/*.yaml',
-                '**/README.md'
+                '**/README.md',
+                '**/index.ts',
+                '**/index.js',
+                '**/main.ts',
+                '**/main.js',
+                '**/app.ts',
+                '**/app.js',
+                '**/schema.sql',
+                '**/migration*.sql'
             ],
             testFilePatterns: [
                 '**/*.test.*',
@@ -37,7 +48,9 @@ class ReviewPlanner {
                 '**/vite.config.*',
                 '**/rollup.config.*',
                 '**/.eslintrc*',
-                '**/.prettierrc*'
+                '**/.prettierrc*',
+                '**/babel.config.*',
+                '**/jest.config.*'
             ]
         };
     }
@@ -85,35 +98,50 @@ class ReviewPlanner {
         }
     }
     /**
-     * Determine optimal strategy based on heuristics
+     * Determine optimal strategy based on enhanced heuristics for large PRs
      */
     determineStrategy(hunks, estimatedTokens) {
         const totalHunks = hunks.length;
         const totalFiles = new Set(hunks.map(h => h.filePath)).size;
+        const avgHunkSize = estimatedTokens / totalHunks;
         // Force single if very small
         if (totalHunks <= this.heuristics.smallReviewThreshold) {
             this.logger.debug(`Using single strategy: small review (${totalHunks} hunks)`);
             return 'single';
         }
-        // Force batch if very large
+        // Force batch if very large (more aggressive batching)
         if (totalHunks > this.heuristics.largeReviewThreshold) {
             this.logger.debug(`Using batch strategy: large review (${totalHunks} hunks)`);
             return 'batch';
         }
-        // Check token limit
+        // Check token limit (more conservative)
         if (estimatedTokens > this.heuristics.maxTokensForSingle) {
             this.logger.debug(`Using batch strategy: token limit exceeded (${estimatedTokens} tokens)`);
             return 'batch';
         }
-        // Check file diversity
-        if (totalFiles > 15) {
+        // Check file diversity (reduced threshold)
+        if (totalFiles > 8) {
             this.logger.debug(`Using batch strategy: many files (${totalFiles} files)`);
             return 'batch';
         }
+        // Check average hunk size - if hunks are large, prefer batching
+        if (avgHunkSize > 200) {
+            this.logger.debug(`Using batch strategy: large average hunk size (${Math.round(avgHunkSize)} tokens)`);
+            return 'batch';
+        }
         // Check for critical files that should be reviewed separately
-        const hasCriticalFiles = hunks.some(hunk => this.matchesPatterns(hunk.filePath, this.heuristics.criticalFilePatterns));
-        if (hasCriticalFiles && totalHunks > this.heuristics.mediumReviewThreshold) {
-            this.logger.debug(`Using batch strategy: critical files detected`);
+        const criticalFiles = hunks.filter(hunk => this.matchesPatterns(hunk.filePath, this.heuristics.criticalFilePatterns));
+        if (criticalFiles.length > 0 && totalHunks > this.heuristics.mediumReviewThreshold) {
+            this.logger.debug(`Using batch strategy: ${criticalFiles.length} critical files detected`);
+            return 'batch';
+        }
+        // Check for mixed file types - if too diverse, use batching
+        const fileExtensions = new Set(hunks.map(h => {
+            const ext = h.filePath.split('.').pop()?.toLowerCase();
+            return ext || 'no-ext';
+        }));
+        if (fileExtensions.size > 4) {
+            this.logger.debug(`Using batch strategy: diverse file types (${fileExtensions.size} extensions)`);
             return 'batch';
         }
         this.logger.debug(`Using single strategy: medium-sized review`);
@@ -173,25 +201,109 @@ class ReviewPlanner {
         return this.splitHunksIntoBatches(sortedHunks, options, 'size-based');
     }
     /**
-     * Create mixed batches (balance file grouping and size limits)
+     * Create mixed batches (smart combination of file-based and size-based)
+     * Enhanced for large PR handling with intelligent grouping
      */
     createMixedBatches(hunks, options) {
         const batches = [];
-        // First, handle critical files separately
+        let batchId = 1;
+        // Step 1: Separate critical files for priority processing
         const { critical, regular } = this.separateCriticalHunks(hunks);
+        // Step 2: Process critical files first with smaller, focused batches
         if (critical.length > 0) {
-            const criticalBatches = this.splitHunksIntoBatches(critical, { ...options, maxHunksPerBatch: Math.min(options.maxHunksPerBatch, 20) }, 'critical');
+            const criticalBatches = this.createCriticalFileBatches(critical, options, batchId);
             batches.push(...criticalBatches);
+            batchId += criticalBatches.length;
         }
-        // Then handle regular files by category
-        const categories = this.categorizeHunks(regular);
-        let batchId = batches.length + 1;
-        for (const [category, categoryHunks] of categories) {
-            const subBatches = this.splitHunksIntoBatches(categoryHunks, options, `${category}-${batchId}`);
-            batches.push(...subBatches);
-            batchId += subBatches.length;
+        // Step 3: Group regular files by type and complexity
+        const groupedRegular = this.groupHunksByComplexity(regular);
+        // Step 4: Process each complexity group
+        for (const [complexity, complexityHunks] of groupedRegular) {
+            const complexityBatches = this.createComplexityBasedBatches(complexityHunks, complexity, options, batchId);
+            batches.push(...complexityBatches);
+            batchId += complexityBatches.length;
         }
         return this.optimizeBatches(batches);
+    }
+    /**
+     * Create focused batches for critical files
+     */
+    createCriticalFileBatches(criticalHunks, options, startBatchId) {
+        // Use smaller batch sizes for critical files to ensure focused review
+        const criticalOptions = {
+            ...options,
+            maxTokensPerBatch: Math.min(options.maxTokensPerBatch * 0.6, 12000),
+            maxFilesPerBatch: Math.min(options.maxFilesPerBatch, 3),
+            maxHunksPerBatch: Math.min(options.maxHunksPerBatch, 8)
+        };
+        return this.splitHunksIntoBatches(criticalHunks, criticalOptions, `critical-${startBatchId}`);
+    }
+    /**
+     * Group hunks by complexity for better batch organization
+     */
+    groupHunksByComplexity(hunks) {
+        const groups = new Map();
+        for (const hunk of hunks) {
+            const complexity = this.determineHunkComplexity(hunk);
+            if (!groups.has(complexity)) {
+                groups.set(complexity, []);
+            }
+            groups.get(complexity).push(hunk);
+        }
+        // Sort by complexity priority: high -> medium -> low
+        const sortedGroups = new Map();
+        ['high', 'medium', 'low'].forEach(complexity => {
+            if (groups.has(complexity)) {
+                sortedGroups.set(complexity, groups.get(complexity));
+            }
+        });
+        return sortedGroups;
+    }
+    /**
+     * Determine hunk complexity based on size and file type
+     */
+    determineHunkComplexity(hunk) {
+        const tokens = this.estimateHunkTokens(hunk);
+        const fileExt = hunk.filePath.split('.').pop()?.toLowerCase() || '';
+        // High complexity: large changes or complex file types
+        if (tokens > 300 || ['ts', 'js', 'tsx', 'jsx', 'py', 'java', 'cpp', 'c'].includes(fileExt)) {
+            return 'high';
+        }
+        // Medium complexity: moderate changes or config files
+        if (tokens > 150 || ['json', 'yml', 'yaml', 'xml', 'sql'].includes(fileExt)) {
+            return 'medium';
+        }
+        // Low complexity: small changes or simple files
+        return 'low';
+    }
+    /**
+     * Create batches based on complexity level
+     */
+    createComplexityBasedBatches(hunks, complexity, options, startBatchId) {
+        let batchOptions = { ...options };
+        // Adjust batch sizes based on complexity
+        switch (complexity) {
+            case 'high':
+                batchOptions = {
+                    ...options,
+                    maxTokensPerBatch: Math.min(options.maxTokensPerBatch * 0.7, 14000),
+                    maxFilesPerBatch: Math.min(options.maxFilesPerBatch, 4),
+                    maxHunksPerBatch: Math.min(options.maxHunksPerBatch, 6)
+                };
+                break;
+            case 'medium':
+                batchOptions = {
+                    ...options,
+                    maxTokensPerBatch: Math.min(options.maxTokensPerBatch * 0.85, 17000),
+                    maxFilesPerBatch: Math.min(options.maxFilesPerBatch, 6),
+                    maxHunksPerBatch: Math.min(options.maxHunksPerBatch, 10)
+                };
+                break;
+            case 'low':
+                // Use standard options for low complexity
+                break;
+        }
+        return this.splitHunksIntoBatches(hunks, batchOptions, `${complexity}-${startBatchId}`);
     }
     /**
      * Split hunks into batches respecting size limits

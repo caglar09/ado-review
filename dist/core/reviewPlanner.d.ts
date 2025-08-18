@@ -46,7 +46,7 @@ export declare class ReviewPlanner {
      */
     createPlan(diffHunks: DiffHunk[], options?: PlanningOptions): ReviewPlan;
     /**
-     * Determine optimal strategy based on heuristics
+     * Determine optimal strategy based on enhanced heuristics for large PRs
      */
     private determineStrategy;
     /**
@@ -66,9 +66,26 @@ export declare class ReviewPlanner {
      */
     private createSizeBasedBatches;
     /**
-     * Create mixed batches (balance file grouping and size limits)
+     * Create mixed batches (smart combination of file-based and size-based)
+     * Enhanced for large PR handling with intelligent grouping
      */
     private createMixedBatches;
+    /**
+     * Create focused batches for critical files
+     */
+    private createCriticalFileBatches;
+    /**
+     * Group hunks by complexity for better batch organization
+     */
+    private groupHunksByComplexity;
+    /**
+     * Determine hunk complexity based on size and file type
+     */
+    private determineHunkComplexity;
+    /**
+     * Create batches based on complexity level
+     */
+    private createComplexityBasedBatches;
     /**
      * Split hunks into batches respecting size limits
      */

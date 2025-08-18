@@ -76,9 +76,69 @@ export declare class ReviewOrchestrator {
      */
     private planReview;
     /**
-     * Execute AI review
+     * Execute AI review with batch processing and rate limiting
      */
     private executeReview;
+    /**
+     * Execute single review for small PRs
+     */
+    private executeSingleReview;
+    /**
+     * Execute batched review with rate limiting for large PRs
+     */
+    private executeBatchedReview;
+    /**
+     * Handle rate limit errors with multiple fallback strategies
+     */
+    private handleRateLimitError;
+    /**
+     * Handle general errors with fallback strategies
+     */
+    private handleGeneralError;
+    /**
+     * Try splitting batch into smaller pieces as fallback
+     */
+    private trySplitBatchFallback;
+    /**
+     * Emergency fallback for multiple consecutive failures
+     */
+    private applyEmergencyFallback;
+    /**
+     * Create context for a specific batch
+     */
+    private createBatchContext;
+    /**
+     * Calculate delay between batches based on batch count
+     */
+    private calculateBatchDelay;
+    /**
+     * Calculate exponential backoff delay for rate limit errors
+     */
+    private calculateExponentialBackoff;
+    /**
+     * Check if error is a rate limit error
+     */
+    private isRateLimitError;
+    /**
+     * Sleep for specified milliseconds
+     */
+    private sleep;
+    /**
+     * Create a reduced version of batch with fewer hunks
+     */
+    private createReducedBatch;
+    /**
+     * Create a simplified version of batch with essential info only
+     */
+    private createSimplifiedBatch;
+    /**
+     * Split batch into smaller sub-batches
+     */
+    private splitBatchIntoSmaller;
+    /**
+     * Generate basic findings when AI review fails
+     */
+    private generateBasicFindings;
     /**
      * Process and filter findings
      */
