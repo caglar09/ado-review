@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// Register tsconfig paths for runtime path mapping resolution
-import 'tsconfig-paths/register';
-
 import { Command } from 'commander';
 import chalk from 'chalk';
 import path from 'path';
