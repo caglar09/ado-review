@@ -1,0 +1,510 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ADO Review CLI Configuration Schema",
+  "description": "Configuration schema for Azure DevOps PR Review CLI tool",
+  "type": "object",
+  "properties": {
+    "azo": {
+      "type": "object",
+      "description": "Azure DevOps configuration",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "description": "API call timeout in milliseconds"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum number of retries for failed API calls"
+        },
+        "retryDelay": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "Delay between retries in milliseconds"
+        },
+        "apiVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+(-preview\\.\\d+)?$",
+          "description": "Azure DevOps API version"
+        }
+      },
+      "additionalProperties": false
+    },
+    "git": {
+      "type": "object",
+      "description": "Git configuration",
+      "properties": {
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Clone depth for sparse checkout"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 5000,
+          "maximum": 600000,
+          "description": "Git operation timeout in milliseconds"
+        },
+        "excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Patterns to exclude during sparse checkout"
+        }
+      },
+      "additionalProperties": false
+    },
+    "gemini": {
+      "type": "object",
+      "description": "Gemini LLM configuration",
+      "properties": {
+        "defaultModel": {
+          "type": "string",
+          "enum": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
+          "description": "Default Gemini model to use"
+        },
+        "availableModels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
+          },
+          "uniqueItems": true,
+          "description": "Available Gemini models"
+        },
+        "maxContextTokens": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 2000000,
+          "description": "Maximum context tokens for LLM"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for LLM responses"
+        },
+        "topP": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top-p for LLM responses"
+        },
+        "topK": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Top-k for LLM responses"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 10000,
+          "maximum": 600000,
+          "description": "Timeout for Gemini CLI calls in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rateLimit": {
+      "type": "object",
+      "description": "Rate limiting configuration",
+      "properties": {
+        "batchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Batch size for API calls"
+        },
+        "sleepMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Sleep time between batches in milliseconds"
+        },
+        "maxConcurrent": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Maximum concurrent requests"
+        },
+        "backoffMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Backoff multiplier for retries"
+        },
+        "maxBackoffMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "description": "Maximum backoff time in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "description": "Review configuration",
+      "properties": {
+        "severityThreshold": {
+          "type": "string",
+          "enum": ["info", "warn", "error"],
+          "description": "Minimum severity level to report"
+        },
+        "severityLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["info", "warn", "error"]
+          },
+          "uniqueItems": true,
+          "description": "Available severity levels"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["table", "json"],
+          "description": "Output format for findings"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["table", "json"]
+          },
+          "uniqueItems": true,
+          "description": "Available output formats"
+        },
+        "maxTableFindings": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum findings to display in table format"
+        },
+        "maxDiffLineLength": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 1000,
+          "description": "Maximum line length for diff context"
+        },
+        "contextLines": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Context lines to include around changes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "object",
+      "description": "File filtering configuration",
+      "properties": {
+        "defaultInclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Default file patterns to include"
+        },
+        "defaultExclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Default file patterns to exclude"
+        },
+        "maxFileSize": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 104857600,
+          "description": "Maximum file size to process in bytes"
+        },
+        "maxTotalFiles": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Maximum total files to process"
+        }
+      },
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object",
+      "description": "Workspace configuration",
+      "properties": {
+        "tmpPrefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Temporary directory prefix"
+        },
+        "cleanupTimeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "description": "Cleanup timeout in milliseconds"
+        },
+        "maxSize": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 1073741824,
+          "description": "Maximum workspace size in bytes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug"],
+          "description": "Log level"
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["error", "warn", "info", "debug"]
+          },
+          "uniqueItems": true,
+          "description": "Available log levels"
+        },
+        "file": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable file logging"
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Log file path"
+            },
+            "maxSize": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 104857600,
+              "description": "Maximum log file size in bytes"
+            },
+            "maxFiles": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Maximum number of log files to keep"
+            }
+          },
+          "additionalProperties": false
+        },
+        "console": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable console logging"
+            },
+            "colors": {
+              "type": "boolean",
+              "description": "Use colors in console output"
+            },
+            "timestamps": {
+              "type": "boolean",
+              "description": "Show timestamps in console output"
+            }
+          },
+          "additionalProperties": false
+        },
+        "maskSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Secrets to mask in logs"
+        }
+      },
+      "additionalProperties": false
+    },
+    "comments": {
+      "type": "object",
+      "description": "Comment configuration",
+      "properties": {
+        "maxCommentsPerPR": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum comments per PR"
+        },
+        "maxCommentLength": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "Maximum comment length"
+        },
+        "prefix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Comment prefix for identification"
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "Enable idempotent comments"
+        },
+        "template": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Comment template"
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "description": "Status reporting configuration",
+      "properties": {
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Status context name"
+        },
+        "descriptions": {
+          "type": "object",
+          "properties": {
+            "pending": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pending status description"
+            },
+            "success": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Success status description"
+            },
+            "failed": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Failed status description"
+            },
+            "error": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Error status description"
+            }
+          },
+          "additionalProperties": false
+        },
+        "targetUrl": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "Target URL for status"
+        }
+      },
+      "additionalProperties": false
+    },
+    "errors": {
+      "type": "object",
+      "description": "Error handling configuration",
+      "properties": {
+        "exitCodes": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "hasFindings": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "userError": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "apiError": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "internalError": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "additionalProperties": false
+        },
+        "retry": {
+          "type": "object",
+          "properties": {
+            "maxRetries": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "initialDelay": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 10000
+            },
+            "maxDelay": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 60000
+            },
+            "backoffMultiplier": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10
+            }
+          },
+          "additionalProperties": false
+        },
+        "timeouts": {
+          "type": "object",
+          "properties": {
+            "default": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 600000
+            },
+            "git": {
+              "type": "integer",
+              "minimum": 5000,
+              "maximum": 600000
+            },
+            "llm": {
+              "type": "integer",
+              "minimum": 10000,
+              "maximum": 600000
+            },
+            "api": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 300000
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

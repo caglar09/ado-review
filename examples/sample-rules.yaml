@@ -1,0 +1,61 @@
+# Sample Review Rules for ADO Review CLI
+# This file demonstrates the expected YAML format for technical review rules
+
+rules:
+  - id: "typescript-strict"
+    name: "TypeScript Strict Mode"
+    description: "Ensure TypeScript strict mode is enabled"
+    pattern: "tsconfig\\.json"
+    severity: "warning"
+    enabled: true
+    suggestion: "Enable strict mode in tsconfig.json for better type safety"
+    category: "typescript"
+    
+  - id: "no-console-log"
+    name: "No Console Logs"
+    description: "Avoid console.log statements in production code"
+    pattern: "console\\.log\\("
+    severity: "warning"
+    enabled: true
+    suggestion: "Use proper logging library instead of console.log"
+    category: "logging"
+    
+  - id: "proper-error-handling"
+    name: "Proper Error Handling"
+    description: "Ensure proper error handling with try-catch blocks"
+    pattern: "throw new Error\\("
+    severity: "info"
+    enabled: true
+    suggestion: "Consider using custom error classes for better error handling"
+    category: "error-handling"
+    
+  - id: "react-hooks-deps"
+    name: "React Hooks Dependencies"
+    description: "Ensure useEffect dependencies are properly specified"
+    pattern: "useEffect\\("
+    severity: "error"
+    enabled: true
+    suggestion: "Add all dependencies to useEffect dependency array"
+    category: "react"
+    
+  - id: "async-await-usage"
+    name: "Async/Await Usage"
+    description: "Prefer async/await over Promise chains"
+    pattern: "\\.then\\("
+    severity: "info"
+    enabled: true
+    suggestion: "Consider using async/await for better readability"
+    category: "async"
+
+guidelines:
+  - "Follow React Native best practices"
+  - "Use TypeScript for type safety"
+  - "Implement proper error boundaries"
+  - "Follow consistent naming conventions"
+  - "Write unit tests for critical functions"
+
+project_info:
+  name: "React Native Audit Project"
+  version: "0.74.x"
+  framework: "React Native"
+  language: "TypeScript"

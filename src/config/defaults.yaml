@@ -1,0 +1,258 @@
+# ADO Review CLI - Default Configuration
+
+# Azure DevOps Configuration
+azo:
+  # Default timeout for API calls (in milliseconds)
+  timeout: 30000
+  # Maximum retries for failed API calls
+  maxRetries: 3
+  # Retry delay in milliseconds
+  retryDelay: 1000
+  # API version to use
+  apiVersion: "7.1-preview.1"
+
+# Git Configuration
+git:
+  # Default clone depth for sparse checkout
+  depth: 1
+  # Timeout for git operations (in milliseconds)
+  timeout: 60000
+  # Excluded patterns for sparse checkout
+  excludePatterns:
+    - "node_modules/**"
+    - "*.lock"
+    - "Pods/**"
+    - ".git/**"
+    - "dist/**"
+    - "build/**"
+    - "coverage/**"
+    - "*.log"
+    - ".DS_Store"
+
+# Gemini LLM Configuration
+gemini:
+  # Default model to use
+  defaultModel: "gemini-2.5-pro"
+  # Available models
+  availableModels:
+    - "gemini-1.5-pro"
+    - "gemini-1.5-flash"
+    - "gemini-1.0-pro"
+  # Default maximum context tokens
+  maxContextTokens: 1000000
+  # Default temperature for responses
+  temperature: 0.1
+  # Default top-p for responses
+  topP: 0.8
+  # Default top-k for responses
+  topK: 40
+  # Default timeout for Gemini CLI calls (in milliseconds)
+  timeout: 120000
+
+# Rate Limiting Configuration
+rateLimit:
+  # Default batch size for API calls
+  batchSize: 5
+  # Default sleep time between batches (in milliseconds)
+  sleepMs: 2000
+  # Maximum concurrent requests
+  maxConcurrent: 3
+  # Backoff multiplier for retries
+  backoffMultiplier: 2
+  # Maximum backoff time (in milliseconds)
+  maxBackoffMs: 30000
+
+# Review Configuration
+review:
+  # Default severity threshold
+  severityThreshold: "info"
+  # Available severity levels
+  severityLevels:
+    - "info"
+    - "warn"
+    - "error"
+  # Default output format
+  format: "table"
+  # Available output formats
+  formats:
+    - "table"
+    - "json"
+  # Maximum findings to display in table format
+  maxTableFindings: 50
+  # Maximum line length for diff context
+  maxDiffLineLength: 200
+  # Context lines to include around changes
+  contextLines: 3
+
+# File Filtering Configuration
+files:
+  # Default include patterns
+  defaultInclude:
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.js"
+    - "**/*.jsx"
+    - "**/*.py"
+    - "**/*.java"
+    - "**/*.cs"
+    - "**/*.cpp"
+    - "**/*.c"
+    - "**/*.h"
+    - "**/*.hpp"
+    - "**/*.go"
+    - "**/*.rs"
+    - "**/*.php"
+    - "**/*.rb"
+    - "**/*.swift"
+    - "**/*.kt"
+    - "**/*.scala"
+    - "**/*.sql"
+    - "**/*.yaml"
+    - "**/*.yml"
+    - "**/*.json"
+    - "**/*.xml"
+    - "**/*.html"
+    - "**/*.css"
+    - "**/*.scss"
+    - "**/*.less"
+    - "**/*.md"
+    - "**/*.dockerfile"
+    - "**/Dockerfile"
+  # Default exclude patterns
+  defaultExclude:
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"
+    - "coverage/**"
+    - "*.min.js"
+    - "*.min.css"
+    - "*.bundle.js"
+    - "*.bundle.css"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/vendor/**"
+    - "**/third_party/**"
+    - "**/.git/**"
+    - "**/.svn/**"
+    - "**/.hg/**"
+    - "**/Pods/**"
+    - "**/*.lock"
+    - "**/package-lock.json"
+    - "**/yarn.lock"
+    - "**/pnpm-lock.yaml"
+    - "**/composer.lock"
+    - "**/Gemfile.lock"
+    - "**/poetry.lock"
+  # Maximum file size to process (in bytes)
+  maxFileSize: 1048576  # 1MB
+  # Maximum total files to process
+  maxTotalFiles: 1000
+
+# Workspace Configuration
+workspace:
+  # Default temporary directory prefix
+  tmpPrefix: "ado-review-"
+  # Cleanup timeout (in milliseconds)
+  cleanupTimeout: 5000
+  # Maximum workspace size (in bytes)
+  maxSize: 104857600  # 100MB
+
+# Logging Configuration
+logging:
+  # Default log level
+  level: "info"
+  # Available log levels
+  levels:
+    - "error"
+    - "warn"
+    - "info"
+    - "debug"
+  # Log file configuration
+  file:
+    # Enable file logging
+    enabled: true
+    # Log file path (relative to workspace)
+    path: "ado-review.log"
+    # Maximum log file size (in bytes)
+    maxSize: 10485760  # 10MB
+    # Maximum number of log files to keep
+    maxFiles: 5
+  # Console logging configuration
+  console:
+    # Enable console logging
+    enabled: true
+    # Use colors in console output
+    colors: true
+    # Show timestamps
+    timestamps: false
+  # Secrets to mask in logs
+  maskSecrets:
+    - "token"
+    - "key"
+    - "password"
+    - "secret"
+    - "auth"
+    - "bearer"
+
+# Comment Configuration
+comments:
+  # Maximum comments per PR
+  maxCommentsPerPR: 100
+  # Maximum comment length
+  maxCommentLength: 4000
+  # Comment prefix for identification
+  prefix: "🤖 ADO Review:"
+  # Enable idempotent comments (avoid duplicates)
+  idempotent: true
+  # Comment template
+  template: |
+    **{severity}**: {message}
+    
+    {suggestion}
+    
+    *Rule: {rule}*
+
+# Status Reporting Configuration
+status:
+  # Status context name
+  context: "ado-review/ai-review"
+  # Status descriptions
+  descriptions:
+    pending: "AI code review in progress..."
+    success: "AI code review completed successfully"
+    failed: "AI code review found issues"
+    error: "AI code review encountered an error"
+  # Target URL for status (optional)
+  targetUrl: null
+
+# Error Handling Configuration
+errors:
+  # Exit codes
+  exitCodes:
+    success: 0
+    hasFindings: 2
+    userError: 3
+    apiError: 4
+    internalError: 5
+  # Error retry configuration
+  retry:
+    # Maximum retries for transient errors
+    maxRetries: 3
+    # Initial retry delay (in milliseconds)
+    initialDelay: 1000
+    # Maximum retry delay (in milliseconds)
+    maxDelay: 10000
+    # Backoff multiplier
+    backoffMultiplier: 2
+  # Timeout configuration
+  timeouts:
+    # Default operation timeout (in milliseconds)
+    default: 30000
+    # Git operation timeout (in milliseconds)
+    git: 60000
+    # LLM operation timeout (in milliseconds)
+    llm: 120000
+    # API operation timeout (in milliseconds)
+    api: 30000

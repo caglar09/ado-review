@@ -1,0 +1,71 @@
+{
+  "name": "ado-review-cli",
+  "version": "1.0.0",
+  "description": "Azure DevOps PR Review CLI - AI Agent supported CLI tool for automated Pull Request reviews",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "ado-review": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli/index.ts",
+    "start": "node dist/cli/index.js",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "azure-devops",
+    "pull-request",
+    "code-review",
+    "cli",
+    "ai",
+    "gemini",
+    "typescript"
+  ],
+  "author": "AI Agent",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "axios": "^1.6.2",
+    "js-yaml": "^4.1.0",
+    "glob": "^10.3.10",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "inquirer": "^9.2.12",
+    "simple-git": "^3.20.0",
+    "tmp": "^0.2.1",
+    "winston": "^3.11.0",
+    "ajv": "^8.12.0",
+    "cli-table3": "^0.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/tmp": "^0.2.6",
+    "@types/inquirer": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.2",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/ado-review-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/ado-review-cli/issues"
+  },
+  "homepage": "https://github.com/your-org/ado-review-cli#readme"
+}
