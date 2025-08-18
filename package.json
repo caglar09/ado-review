@@ -23,7 +23,8 @@
     "cli",
     "ai",
     "gemini",
-    "typescript"
+    "typescript",
+    "azure"
   ],
   "author": "AI Agent",
   "license": "MIT",
