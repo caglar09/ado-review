@@ -93,6 +93,7 @@ export class ReviewOrchestrator {
       this.logger.debug('Starting step 3: Fetch PR info and diffs');
       const prInfo = await this.fetchPRInfo();
       this.logger.debug('Completed fetchPRInfo');
+
       const diffs = await this.fetchDiffs(prInfo);
       this.logger.debug('Completed step 3: Fetch PR info and diffs');
       

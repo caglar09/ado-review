@@ -1,0 +1,4 @@
+curl -H "Authorization: Bearer ??" \
+  "https://??/{org}/_apis/git/repositories/{project}/pullRequests/{PrID}/iterations/1/changes?api-version=7.0"
+
+  AZURE_DEVOPS_PAT=?? && node dist/cli/index.js review --pr 18879 --org {org} --project {project} --repo {repo} --dry-run

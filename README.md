@@ -96,7 +96,7 @@ npm link
 
 ```bash
 # Azure DevOps Personal Access Token
-export AZURE_DEVOPS_EXT_PAT="your-ado-token"
+export AZURE_DEVOPS_PAT="your-ado-token"
 
 # Google Gemini API Key
 export GEMINI_API_KEY="your-gemini-api-key"
@@ -323,7 +323,7 @@ git:
 
 | Değişken | Açıklama | Varsayılan |
 |----------|----------|------------|
-| `AZURE_DEVOPS_EXT_PAT` | Azure DevOps Personal Access Token | - |
+| `AZURE_DEVOPS_PAT` | Azure DevOps Personal Access Token | - |
 | `GEMINI_API_KEY` | Google Gemini API anahtarı | - |
 | `AZURE_DEVOPS_ORG_URL` | Azure DevOps organizasyon URL'i | - |
 | `ADO_REVIEW_LOG_LEVEL` | Log seviyesi (error/warn/info/debug) | `info` |
@@ -563,7 +563,7 @@ steps:
       --post-status
   displayName: 'AI Code Review'
   env:
-    AZURE_DEVOPS_EXT_PAT: $(AZURE_DEVOPS_PAT)
+    AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
     GEMINI_API_KEY: $(GEMINI_API_KEY)
   condition: eq(variables['Build.Reason'], 'PullRequest')
 ```
@@ -599,7 +599,7 @@ jobs:
           --auto-approve \
           --format json > review-results.json
       env:
-        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+        AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         
     - name: Upload Results

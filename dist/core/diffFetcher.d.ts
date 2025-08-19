@@ -36,44 +36,20 @@ export declare class DiffFetcher {
     private errorHandler;
     constructor(adoClient: ADOClient, gitManager: GitManager, logger: Logger, errorHandler: ErrorHandler);
     /**
-     * Fetch pull request diff using final diff API
-     * This gets only the net changes after all commits are applied
+     * Fetch pull request diff using iteration changes API
+     * This gets the changes from the PR iterations which matches the manual API data
      */
     fetchPullRequestDiff(pullRequestId: number, workingDirectory?: string): Promise<PullRequestDiff>;
     /**
-     * Process individual file change from final diff
+     * Process individual file change from iteration changes
      */
-    private processFinalDiffChange;
-    /**
-     * Map ADO change type to our change type
-     */
+    private processIterationChange;
     private mapChangeType;
-    /**
-     * Check if file is binary based on extension
-     */
     private isBinaryFile;
-    /**
-     * Create basic diff representation when git is not available
-     */
-    /**
-     * Create real diff using Azure DevOps API
-     */
     private createBasicDiff;
-    /**
-     * Parse diff content into hunks
-     */
     private parseDiffHunks;
-    /**
-     * Determine hunk change type based on content
-     */
     private determineHunkChangeType;
-    /**
-     * Filter diffs based on file patterns
-     */
-    filterDiffs(pullRequestDiff: PullRequestDiff, includePatterns?: string[], excludePatterns?: string[], specificFiles?: string[]): PullRequestDiff;
-    /**
-     * Get summary of changes
-     */
+    filterDiffs(pullRequestDiff: PullRequestDiff, _includePatterns?: string[], _excludePatterns?: string[], specificFiles?: string[]): PullRequestDiff;
     getSummary(pullRequestDiff: PullRequestDiff): string;
 }
 //# sourceMappingURL=diffFetcher.d.ts.map

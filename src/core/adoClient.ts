@@ -156,7 +156,6 @@ export class ADOClient {
           }
         }
       );
-
       this.logger.debug(`Successfully fetched PR ${pullRequestId} info`);
       this.logger.debug(`Response status: ${response.status}`);
       this.logger.debug(`Response data keys:`, Object.keys(response.data || {}));
@@ -732,7 +731,7 @@ export class ADOClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        this.logger.debug(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+        this.logger.debug(`Making ${config.method?.toUpperCase()} request to ${config.baseURL}${config.url}`);
         // Initialize retry count
         config.metadata = { retryCount: 0 };
         return config;
@@ -746,11 +745,11 @@ export class ADOClient {
     // Response interceptor with retry logic
     this.client.interceptors.response.use(
       (response) => {
-        this.logger.debug(`Received ${response.status} response from ${response.config.url}`);
+        this.logger.debug(`Received ${response.status} response from ${response.config.baseURL}${response.config.url}`);
         
         // Check for authentication errors even in "successful" responses
         if (response.status === 401) {
-          this.logger.error(`Authentication failed (401) for ${response.config.url}`);
+          this.logger.error(`Authentication failed (401) for ${response.config.baseURL}${response.config.url}`);
           const error = new Error('Authentication failed');
           (error as any).response = response;
           throw error;
