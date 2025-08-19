@@ -36,9 +36,6 @@ module.exports = {
 
   // Module resolution
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest'
-  },
 
   // Setup files
   setupFilesAfterEnv: [],
@@ -60,14 +57,14 @@ module.exports = {
   ],
 
   // Module name mapping for absolute imports
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
 
-  // Globals for TypeScript
-  globals: {
-    'ts-jest': {
+  // TypeScript configuration
+  transform: {
+    '^.+\.ts$': ['ts-jest', {
       tsconfig: 'tsconfig.json'
-    }
+    }]
   }
 };

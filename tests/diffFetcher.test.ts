@@ -27,11 +27,25 @@ describe('DiffFetcher', () => {
     } as any;
     mockErrorHandler = {
       createInternalError: jest.fn(),
-      createUserError: jest.fn()
+      createUserError: jest.fn(),
+      normalizeError: jest.fn().mockImplementation((error) => {
+        return {
+          message: error instanceof Error ? error.message : String(error),
+          code: 5,
+          context: undefined
+        };
+      })
     } as any;
     
-    mockAdoClient = new ADOClient('org', 'project', 'repo', 'token', mockLogger, mockErrorHandler) as jest.Mocked<ADOClient>;
-    mockGitManager = new GitManager(mockLogger, mockErrorHandler) as jest.Mocked<GitManager>;
+    mockAdoClient = {
+      getPullRequestFinalDiff: jest.fn(),
+      getPullRequestIterations: jest.fn(),
+      getIterationChanges: jest.fn()
+    } as any;
+    
+    mockGitManager = {
+      getDiff: jest.fn()
+    } as any;
 
     diffFetcher = new DiffFetcher(mockAdoClient, mockGitManager, mockLogger, mockErrorHandler);
   });
@@ -69,6 +83,7 @@ describe('DiffFetcher', () => {
 
       mockAdoClient.getPullRequestFinalDiff.mockResolvedValue(mockFinalDiff);
       mockAdoClient.getPullRequestIterations.mockResolvedValue([mockIteration]);
+      mockAdoClient.getIterationChanges.mockResolvedValue(mockFinalDiff.changes);
       mockGitManager.getDiff.mockResolvedValue(mockGitDiff);
 
       const result = await diffFetcher.fetchPullRequestDiff(pullRequestId, workingDirectory);
@@ -78,7 +93,7 @@ describe('DiffFetcher', () => {
         workingDirectory,
         'target456', // target commit
         'source123', // source commit
-        '/test/file.ts' // file path
+        'test/file.ts' // file path
       );
 
       // Verify the result contains the git diff content
@@ -115,6 +130,7 @@ describe('DiffFetcher', () => {
 
       mockAdoClient.getPullRequestFinalDiff.mockResolvedValue(mockFinalDiff);
       mockAdoClient.getPullRequestIterations.mockResolvedValue([mockIteration]);
+      mockAdoClient.getIterationChanges.mockResolvedValue(mockFinalDiff.changes);
       mockGitManager.getDiff.mockRejectedValue(new Error('Git command failed'));
 
       const result = await diffFetcher.fetchPullRequestDiff(pullRequestId, workingDirectory);
@@ -158,6 +174,7 @@ describe('DiffFetcher', () => {
 
       mockAdoClient.getPullRequestFinalDiff.mockResolvedValue(mockFinalDiff);
       mockAdoClient.getPullRequestIterations.mockResolvedValue([mockIteration]);
+      mockAdoClient.getIterationChanges.mockResolvedValue(mockFinalDiff.changes);
 
       const result = await diffFetcher.fetchPullRequestDiff(pullRequestId); // No working directory
 

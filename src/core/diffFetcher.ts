@@ -200,7 +200,7 @@ export class DiffFetcher {
         diffContent = this.createBasicDiff(change, iteration);
       }
     } catch (error) {
-      this.logger.debug(`Could not get git diff for ${filePath}, using basic diff: ${(error as Error).message}`);
+      this.logger.warn(`Failed to get git diff for ${filePath}: ${(error as Error).message}`);
       diffContent = this.createBasicDiff(change, iteration);
     }
 
