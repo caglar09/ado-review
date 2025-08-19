@@ -32,12 +32,16 @@ git:
 # Gemini LLM Configuration
 gemini:
   # Default model to use
-  defaultModel: "gemini-2.5-pro"
+  defaultModel: "gemini-2.5-flash"
   # Available models
   availableModels:
-    - "gemini-1.5-pro"
-    - "gemini-1.5-flash"
-    - "gemini-1.0-pro"
+    - "gemini-2.5-pro"
+    - "gemini-2.5-flash"
+    - "gemini-2.5-flash-lite"
+    - "gemini-2.0-flash"
+    - "gemini-2.0-flash-lite"
+    - "gemini-1.5-pro-002"
+    - "gemini-1.5-flash-002"
   # Default maximum context tokens
   maxContextTokens: 1000000
   # Default temperature for responses
