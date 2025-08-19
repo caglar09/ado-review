@@ -1043,9 +1043,10 @@ export class ReviewOrchestrator {
       console.log('\n' + chalk.cyan('Options:'));
       console.log('  [a] Approve all findings and post to Azure DevOps');
       console.log('  [s] Select specific findings to post');
+      console.log('  [p] Approve PR (no findings will be posted)');
       console.log('  [n] Cancel - do not post any comments');
       
-      const answer = await question('\nWhat would you like to do? [a/s/n]: ');
+      const answer = await question('\nWhat would you like to do? [a/s/p/n]: ');
       
       switch (answer.toLowerCase().trim()) {
         case 'a':
@@ -1056,6 +1057,13 @@ export class ReviewOrchestrator {
         case 's':
         case 'select':
           return await this.selectiveApproval(findings, question);
+          
+        case 'p':
+        case 'pr':
+        case 'approve-pr':
+          await this.approvePullRequest();
+          console.log(chalk.green('✅ Pull Request approved - no comments will be posted'));
+          return [];
           
         case 'n':
         case 'no':
@@ -1105,6 +1113,40 @@ export class ReviewOrchestrator {
     
     console.log(`\n${chalk.green('✅ Selected')} ${approvedFindings.length} out of ${findings.length} findings for posting`);
     return approvedFindings;
+  }
+
+  /**
+   * Approve the current pull request
+   */
+  private async approvePullRequest(): Promise<void> {
+    try {
+      if (!this.adoClient) {
+        throw new Error('ADO client not initialized');
+      }
+
+      // Get current user ID
+      const userId = await this.adoClient.getCurrentUserId();
+      
+      // Get PR ID from options
+      const prInfo = this.argsParser.parsePRInfo(this.options);
+      let prId: number;
+      
+      if (prInfo.type === 'url' && prInfo.url) {
+        prId = this.extractPRIdFromUrl(prInfo.url);
+      } else if (prInfo.type === 'id' && prInfo.id) {
+        prId = parseInt(prInfo.id);
+      } else {
+        throw new Error('Unable to determine PR ID for approval');
+      }
+
+      // Approve the PR
+      await this.adoClient.approvePullRequest(prId, userId);
+      
+      this.logger.info(`Successfully approved PR ${prId}`);
+    } catch (error) {
+      this.logger.error('Failed to approve pull request:', error);
+      throw error;
+    }
   }
 
   private displayFindings(findings: ReviewFinding[]): void {

@@ -41,6 +41,7 @@
 - **Akıllı Dosya Filtreleme**: Include/exclude pattern'ları
 - **Severity Tabanlı Filtreleme**: Info, warn, error seviyeleri
 - **Batch İşleme**: Büyük PR'lar için optimize edilmiş strateji
+- **PR Onaylama**: İnceleme sonrası doğrudan PR onaylama seçeneği
 
 ### 🛠️ Teknik Özellikler
 - **Sparse Git Clone**: Sadece gerekli dosyaları indirme
@@ -173,6 +174,7 @@ ado-review review --pr-url "https://dev.azure.com/org/project/_git/repo/pullrequ
 **Onay Seçenekleri:**
 - **[a] Approve all**: Tüm bulguları Azure DevOps'a gönder
 - **[s] Select specific**: Bulguları tek tek seçerek gönder
+- **[p] Approve PR**: PR'ı onayla (hiçbir yorum gönderilmez)
 - **[n] Cancel**: Hiçbir yorum gönderme
 
 **Selective Approval Örneği:**

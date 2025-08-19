@@ -616,3 +616,148 @@ Her başarılı release'de oluşturulan dosyalar:
 - Tüm testler geçmeli (workflow requirement)
 - Build başarılı olmalı
 - Lint kurallarına uygunluk önerilir
+
+## 16. Proje Kuralları ve Değişiklik Geçmişi
+
+### Proje Yapısı ve Mimari
+
+#### Core Modüller
+
+- **CLI Layer** (`src/cli/`): Commander.js tabanlı CLI interface
+- **Core Layer** (`src/core/`): Ana business logic ve orchestration
+- **Config Layer** (`src/config/`): Konfigürasyon yönetimi ve validation
+
+#### Temel Prensipler
+
+1. **Separation of Concerns**: Her modül tek bir sorumluluğa sahip
+2. **Dependency Injection**: Constructor-based dependency injection
+3. **Error Handling**: Merkezi hata yönetimi ve anlamlı exit kodları
+4. **Logging**: Structured logging with Winston
+5. **Type Safety**: Strict TypeScript configuration
+
+### Son Değişiklikler
+
+#### 2024-01-XX - PR Onaylama Özelliği Eklendi
+
+##### Yapısal Değişiklikler
+
+**ADOClient Sınıfı (`src/core/adoClient.ts`)**
+- `approvePullRequest(pullRequestId: number, reviewerId: string)` metodu eklendi
+- `getCurrentUserId()` metodu eklendi
+- Azure DevOps REST API'nin `PUT /pullrequests/{id}/reviewers/{reviewerId}` endpoint'i kullanılıyor
+- Vote değeri 10 (approved) olarak ayarlanıyor
+
+**ReviewOrchestrator Sınıfı (`src/core/reviewOrchestrator.ts`)**
+- `approvePullRequest()` metodu eklendi
+- `promptUserApproval()` metoduna `[p] Approve PR` seçeneği eklendi
+- Kullanıcı 'p' seçtiğinde PR otomatik olarak onaylanıyor ve hiçbir yorum gönderilmiyor
+
+##### Kullanıcı Deneyimi Değişiklikleri
+
+**İnteraktif Onay Sistemi**
+- Yeni seçenek: `[p] Approve PR (no findings will be posted)`
+- Bu seçenek seçildiğinde:
+  - Mevcut kullanıcının ID'si otomatik olarak alınır
+  - PR, Azure DevOps API üzerinden onaylanır
+  - Hiçbir code review yorumu gönderilmez
+  - İşlem başarılı olduğunda kullanıcıya bilgi verilir
+
+##### API Entegrasyonu
+
+**Azure DevOps REST API**
+- Endpoint: `PUT https://dev.azure.com/{org}/{project}/_apis/git/repositories/{repo}/pullRequests/{prId}/reviewers/{reviewerId}`
+- API Version: 7.1
+- Vote Values:
+  - 10: Approved
+  - 5: Approved with suggestions
+  - 0: No vote
+  - -5: Waiting for author
+  - -10: Rejected
+
+##### Hata Yönetimi
+
+- API çağrıları sırasında oluşabilecek hatalar merkezi error handler ile yönetiliyor
+- Kullanıcı ID'si alınamadığında anlamlı hata mesajları
+- PR onaylama işlemi başarısız olduğunda detaylı hata raporlama
+
+##### Güvenlik Considerations
+
+- Kullanıcının PR'ı onaylama yetkisi Azure DevOps tarafında kontrol ediliyor
+- API token'ı ile kimlik doğrulama yapılıyor
+- Sadece mevcut kullanıcının kendisi reviewer olarak ekleniyor
+
+#### Gelecek Geliştirmeler
+
+- [ ] Farklı vote seviyeleri için seçenekler (approve with suggestions, reject)
+- [ ] Bulk PR onaylama özelliği
+- [ ] PR onaylama geçmişi ve raporlama
+- [ ] Team reviewer assignment özelliği
+
+### Kod Standartları
+
+#### TypeScript
+- Strict mode aktif
+- Explicit return types for public methods
+- Interface segregation principle
+- Proper error typing
+
+#### Error Handling
+- Custom error types for different scenarios
+- Structured error context with metadata
+- Graceful degradation strategies
+- Meaningful exit codes
+
+#### Logging
+- Structured logging with context
+- Secret masking for sensitive data
+- Different log levels for different environments
+- File and console output support
+
+#### Testing
+- Unit tests for all core functionality
+- Integration tests for API interactions
+- Mock strategies for external dependencies
+- Coverage requirements >90%
+
+### Deployment ve CI/CD
+
+#### Build Process
+- TypeScript compilation
+- Config file copying
+- Dependency bundling
+- Version management
+
+#### Release Strategy
+- Semantic versioning
+- Automated releases via GitHub Actions
+- NPM package publishing
+- Documentation updates
+
+### Bağımlılık Yönetimi
+
+#### Core Dependencies
+- `commander`: CLI framework
+- `axios`: HTTP client
+- `winston`: Logging
+- `js-yaml`: YAML parsing
+- `chalk`: Terminal colors
+
+#### Development Dependencies
+- `typescript`: Language support
+- `jest`: Testing framework
+- `eslint`: Code linting
+- `prettier`: Code formatting
+
+### Konfigürasyon Yönetimi
+
+#### Dosya Hiyerarşisi
+1. CLI arguments (en yüksek öncelik)
+2. `.adorevrc.yaml` (proje dizini)
+3. `~/.adorevrc.yaml` (kullanıcı dizini)
+4. Default configuration (en düşük öncelik)
+
+#### Validation
+- JSON Schema validation
+- Runtime type checking
+- Environment variable validation
+- File path validation

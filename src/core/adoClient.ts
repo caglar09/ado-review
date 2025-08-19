@@ -646,6 +646,86 @@ export class ADOClient {
   }
 
   /**
+   * Approve a pull request by casting a vote
+   * @param pullRequestId - The ID of the pull request
+   * @param reviewerId - The ID of the reviewer (current user)
+   * @returns Promise<void>
+   */
+  public async approvePullRequest(pullRequestId: number, reviewerId: string): Promise<void> {
+    try {
+      this.logger.debug(`Approving PR ${pullRequestId} as reviewer ${reviewerId}`);
+      
+      await this.client.put(
+        `/git/repositories/${this.repository}/pullrequests/${pullRequestId}/reviewers/${reviewerId}`,
+        {
+          vote: 10, // 10 = approved
+          id: reviewerId
+        },
+        {
+          params: {
+            'api-version': '7.1'
+          }
+        }
+      );
+
+      this.logger.info(`Successfully approved PR ${pullRequestId}`);
+    } catch (error) {
+      throw this.errorHandler.createFromHttpResponse(
+        {
+          status: (error as any).response?.status || 500,
+          statusText: (error as any).response?.statusText || 'Unknown Error',
+          data: (error as any).response?.data
+        },
+        {
+          operation: 'approvePullRequest',
+          component: 'ADOClient',
+          metadata: { pullRequestId, reviewerId }
+        }
+      );
+    }
+  }
+
+  /**
+   * Get current user information to use as reviewer ID
+   * @returns Promise<string> - The current user's ID
+   */
+  public async getCurrentUserId(): Promise<string> {
+    try {
+      this.logger.debug('Fetching current user information');
+      
+      const response: AxiosResponse<{ authenticatedUser: { id: string } }> = await this.client.get(
+        '/_apis/connectionData',
+        {
+          params: {
+            'api-version': '7.1'
+          }
+        }
+      );
+
+      const userId = response.data.authenticatedUser?.id;
+      if (!userId) {
+        throw new Error('Unable to retrieve current user ID from connection data');
+      }
+
+      this.logger.debug(`Current user ID: ${userId}`);
+      return userId;
+    } catch (error) {
+      throw this.errorHandler.createFromHttpResponse(
+        {
+          status: (error as any).response?.status || 500,
+          statusText: (error as any).response?.statusText || 'Unknown Error',
+          data: (error as any).response?.data
+        },
+        {
+          operation: 'getCurrentUserId',
+          component: 'ADOClient',
+          metadata: {}
+        }
+      );
+    }
+  }
+
+  /**
    * Setup request/response interceptors
    */
   private setupInterceptors(): void {

@@ -166,6 +166,10 @@ export declare class ReviewOrchestrator {
      * Allow user to selectively approve findings
      */
     private selectiveApproval;
+    /**
+     * Approve the current pull request
+     */
+    private approvePullRequest;
     private displayFindings;
 }
 //# sourceMappingURL=reviewOrchestrator.d.ts.map

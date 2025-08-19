@@ -220,6 +220,11 @@ class ReviewOrchestrator {
         await this.workspace.create();
         // Update logger to use workspace directory for logs
         this.logger.workspaceDir = this.workspace.getPath();
+        // Reinitialize ConfigLoader with workspace directory to support .adorevrc.yaml in cloned repo
+        const workspacePath = this.workspace.getPath();
+        if (workspacePath) {
+            this.configLoader = new configLoader_1.ConfigLoader(this.logger, this.errorHandler, workspacePath);
+        }
         return this.workspace;
     }
     /**
@@ -270,6 +275,15 @@ class ReviewOrchestrator {
         await this.gitManager.cloneRepository(prInfo.repository.remoteUrl, {
             branch: prInfo.sourceRefName,
             workingDirectory: sourceDir
+        });
+        // After cloning, reinitialize ConfigLoader to read .adorevrc.yaml from cloned workspace
+        this.logger.debug('Reinitializing ConfigLoader with cloned workspace directory:', sourceDir);
+        this.configLoader = new configLoader_1.ConfigLoader(this.logger, this.errorHandler, sourceDir);
+        // Reload configuration from the cloned workspace
+        const config = await this.configLoader.loadConfig();
+        this.logger.debug('Reloaded configuration from workspace:', {
+            hasWorkspaceConfig: !!config,
+            configKeys: config ? Object.keys(config) : []
         });
         // Fetch PR diff
         const prDiff = await this.diffFetcher.fetchPullRequestDiff(prInfo.pullRequestId, sourceDir);
@@ -817,8 +831,9 @@ class ReviewOrchestrator {
             console.log('\n' + chalk_1.default.cyan('Options:'));
             console.log('  [a] Approve all findings and post to Azure DevOps');
             console.log('  [s] Select specific findings to post');
+            console.log('  [p] Approve PR (no findings will be posted)');
             console.log('  [n] Cancel - do not post any comments');
-            const answer = await question('\nWhat would you like to do? [a/s/n]: ');
+            const answer = await question('\nWhat would you like to do? [a/s/p/n]: ');
             switch (answer.toLowerCase().trim()) {
                 case 'a':
                 case 'approve':
@@ -827,6 +842,12 @@ class ReviewOrchestrator {
                 case 's':
                 case 'select':
                     return await this.selectiveApproval(findings, question);
+                case 'p':
+                case 'pr':
+                case 'approve-pr':
+                    await this.approvePullRequest();
+                    console.log(chalk_1.default.green('✅ Pull Request approved - no comments will be posted'));
+                    return [];
                 case 'n':
                 case 'no':
                 case 'cancel':
@@ -869,6 +890,37 @@ class ReviewOrchestrator {
         }
         console.log(`\n${chalk_1.default.green('✅ Selected')} ${approvedFindings.length} out of ${findings.length} findings for posting`);
         return approvedFindings;
+    }
+    /**
+     * Approve the current pull request
+     */
+    async approvePullRequest() {
+        try {
+            if (!this.adoClient) {
+                throw new Error('ADO client not initialized');
+            }
+            // Get current user ID
+            const userId = await this.adoClient.getCurrentUserId();
+            // Get PR ID from options
+            const prInfo = this.argsParser.parsePRInfo(this.options);
+            let prId;
+            if (prInfo.type === 'url' && prInfo.url) {
+                prId = this.extractPRIdFromUrl(prInfo.url);
+            }
+            else if (prInfo.type === 'id' && prInfo.id) {
+                prId = parseInt(prInfo.id);
+            }
+            else {
+                throw new Error('Unable to determine PR ID for approval');
+            }
+            // Approve the PR
+            await this.adoClient.approvePullRequest(prId, userId);
+            this.logger.info(`Successfully approved PR ${prId}`);
+        }
+        catch (error) {
+            this.logger.error('Failed to approve pull request:', error);
+            throw error;
+        }
     }
     displayFindings(findings) {
         if (findings.length === 0) {

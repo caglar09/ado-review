@@ -108,7 +108,8 @@ export declare class ConfigLoader {
     private config;
     private configPath;
     private userConfigPath;
-    constructor(logger: Logger, errorHandler: ErrorHandler);
+    private workspaceConfigPath?;
+    constructor(logger: Logger, errorHandler: ErrorHandler, workspaceDir?: string);
     /**
      * Deep merge user configuration with default configuration
      */

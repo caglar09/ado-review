@@ -43,7 +43,8 @@ class ConfigLoader {
     config = null;
     configPath;
     userConfigPath;
-    constructor(logger, errorHandler) {
+    workspaceConfigPath;
+    constructor(logger, errorHandler, workspaceDir) {
         this.logger = logger;
         this.errorHandler = errorHandler;
         // Find config file path relative to the module
@@ -52,7 +53,11 @@ class ConfigLoader {
         const distConfigPath = path.join(moduleDir, 'dist', 'config', 'defaults.yaml');
         const srcConfigPath = path.join(moduleDir, 'src', 'config', 'defaults.yaml');
         this.configPath = fs.existsSync(distConfigPath) ? distConfigPath : srcConfigPath;
-        // Look for user config file in project root
+        // Look for user config file in workspace first, then in project root
+        if (workspaceDir) {
+            this.workspaceConfigPath = path.join(workspaceDir, '.adorevrc.yaml');
+            this.logger.debug(`Workspace config path: ${this.workspaceConfigPath}`);
+        }
         this.userConfigPath = path.join(process.cwd(), '.adorevrc.yaml');
         this.logger.debug(`Default config path: ${this.configPath}`);
         this.logger.debug(`User config path: ${this.userConfigPath}`);
@@ -102,27 +107,54 @@ class ConfigLoader {
                 throw new Error('Failed to parse default configuration file');
             }
             // Load user configuration if it exists
+            // Priority: workspace .adorevrc.yaml > project root .adorevrc.yaml
             let userConfig = {};
-            if (fs.existsSync(this.userConfigPath)) {
-                this.logger.debug('Found .adorevrc.yaml, loading user configuration');
+            let configSource = 'none';
+            // First, try to load from workspace directory
+            if (this.workspaceConfigPath && fs.existsSync(this.workspaceConfigPath)) {
+                this.logger.debug('Found .adorevrc.yaml in workspace, loading configuration');
+                try {
+                    const userConfigContent = fs.readFileSync(this.workspaceConfigPath, 'utf-8');
+                    userConfig = yaml.load(userConfigContent);
+                    if (!userConfig) {
+                        this.logger.warn('Workspace configuration file is empty or invalid, trying project root');
+                        userConfig = {};
+                    }
+                    else {
+                        this.logger.debug('Workspace configuration loaded successfully');
+                        configSource = 'workspace';
+                    }
+                }
+                catch (userError) {
+                    this.logger.warn(`Failed to load workspace configuration: ${userError instanceof Error ? userError.message : 'Unknown error'}. Trying project root.`);
+                    userConfig = {};
+                }
+            }
+            // If no workspace config found or failed to load, try project root
+            if (configSource === 'none' && fs.existsSync(this.userConfigPath)) {
+                this.logger.debug('Found .adorevrc.yaml in project root, loading configuration');
                 try {
                     const userConfigContent = fs.readFileSync(this.userConfigPath, 'utf-8');
                     userConfig = yaml.load(userConfigContent);
                     if (!userConfig) {
-                        this.logger.warn('User configuration file is empty or invalid, using defaults only');
+                        this.logger.warn('Project root configuration file is empty or invalid, using defaults only');
                         userConfig = {};
                     }
                     else {
-                        this.logger.debug('User configuration loaded successfully');
+                        this.logger.debug('Project root configuration loaded successfully');
+                        configSource = 'project-root';
                     }
                 }
                 catch (userError) {
-                    this.logger.warn(`Failed to load user configuration: ${userError instanceof Error ? userError.message : 'Unknown error'}. Using defaults only.`);
+                    this.logger.warn(`Failed to load project root configuration: ${userError instanceof Error ? userError.message : 'Unknown error'}. Using defaults only.`);
                     userConfig = {};
                 }
             }
+            if (configSource === 'none') {
+                this.logger.debug('No .adorevrc.yaml found in workspace or project root, using default configuration only');
+            }
             else {
-                this.logger.debug('No .adorevrc.yaml found, using default configuration only');
+                this.logger.info(`Using configuration from: ${configSource}`);
             }
             // Deep merge user config with default config
             this.config = this.mergeConfigs(defaultConfig, userConfig);

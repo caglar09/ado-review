@@ -147,6 +147,18 @@ export declare class ADOClient {
      */
     getCommentThreads(pullRequestId: number): Promise<CommentThread[]>;
     /**
+     * Approve a pull request by casting a vote
+     * @param pullRequestId - The ID of the pull request
+     * @param reviewerId - The ID of the reviewer (current user)
+     * @returns Promise<void>
+     */
+    approvePullRequest(pullRequestId: number, reviewerId: string): Promise<void>;
+    /**
+     * Get current user information to use as reviewer ID
+     * @returns Promise<string> - The current user's ID
+     */
+    getCurrentUserId(): Promise<string>;
+    /**
      * Setup request/response interceptors
      */
     private setupInterceptors;
