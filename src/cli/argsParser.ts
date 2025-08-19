@@ -84,7 +84,7 @@ export class ArgsParser {
       allFiles: options.allFiles || false,
       
       // LLM configuration
-      model: options.model || 'gemini-pro',
+      model: options.model || this.getDefaultModelFromConfig(),
       maxContextTokens: options.maxContextTokens || 32000,
       
       // Rate limiting
@@ -352,6 +352,25 @@ export class ArgsParser {
     } catch (error) {
       this.logger.warn(`Error loading config file: ${error}. Using fallback model list.`);
       return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+    }
+  }
+
+  private getDefaultModelFromConfig(): string {
+    try {
+      const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = yaml.load(configContent) as any;
+      
+      if (config?.gemini?.defaultModel && typeof config.gemini.defaultModel === 'string') {
+        return config.gemini.defaultModel;
+      }
+      
+      // Fallback to hardcoded default if config is not available
+      this.logger.warn('Could not load default model from config, using fallback default');
+      return 'gemini-pro';
+    } catch (error) {
+      this.logger.warn(`Error loading config file: ${error}. Using fallback default model.`);
+      return 'gemini-pro';
     }
   }
 }

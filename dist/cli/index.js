@@ -41,6 +41,7 @@ const commander_1 = require("commander");
 const chalk_1 = __importDefault(require("chalk"));
 const path_1 = __importStar(require("path"));
 const fs_1 = require("fs");
+const yaml = __importStar(require("js-yaml"));
 const logger_js_1 = require("../core/logger.js");
 const errorHandler_js_1 = require("../core/errorHandler.js");
 const reviewOrchestrator_js_1 = require("../core/reviewOrchestrator.js");
@@ -50,6 +51,22 @@ const program = new commander_1.Command();
 const logger = new logger_js_1.Logger();
 const errorHandler = new errorHandler_js_1.ErrorHandler(logger);
 const configLoader = new configLoader_js_1.ConfigLoader(logger, errorHandler);
+// Function to get default model from config
+function getDefaultModelFromConfig() {
+    try {
+        const configPath = (0, path_1.join)(__dirname, '..', 'config', 'defaults.yaml');
+        const configContent = (0, fs_1.readFileSync)(configPath, 'utf8');
+        const config = yaml.load(configContent);
+        if (config?.gemini?.defaultModel && typeof config.gemini.defaultModel === 'string') {
+            return config.gemini.defaultModel;
+        }
+        // Fallback to hardcoded default if config is not available
+        return 'gemini-pro';
+    }
+    catch (error) {
+        return 'gemini-pro';
+    }
+}
 // Read version from package.json
 const packageJsonPath = (0, path_1.join)(__dirname, '../../package.json');
 const packageJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, 'utf-8'));
@@ -74,7 +91,7 @@ program
     .option('--exclude <patterns...>', 'File patterns to exclude', [])
     .option('--files <files...>', 'Specific files to review', [])
     .option('--all-files', 'Review all files (not just changed ones)', false)
-    .option('--model <name>', 'Gemini model to use', 'gemini-pro')
+    .option('--model <name>', 'Gemini model to use', getDefaultModelFromConfig())
     .option('--max-context-tokens <number>', 'Maximum context tokens for LLM', parseInt, 32000)
     .option('--ratelimit-batch <number>', 'Batch size for rate limiting', parseInt, 5)
     .option('--ratelimit-sleep-ms <number>', 'Sleep time between batches (ms)', parseInt, 1000)

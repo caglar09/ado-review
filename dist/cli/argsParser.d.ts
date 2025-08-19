@@ -72,5 +72,6 @@ export declare class ArgsParser {
      * Get valid models from defaults.yaml configuration
      */
     private getValidModelsFromConfig;
+    private getDefaultModelFromConfig;
 }
 //# sourceMappingURL=argsParser.d.ts.map

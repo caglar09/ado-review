@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as yaml from 'js-yaml';
 import { Logger } from './logger';
 import { ErrorHandler } from './errorHandler';
 import { ReviewContext } from './contextBuilder';
@@ -633,14 +634,32 @@ export class GeminiAdapter {
    * Get available models (placeholder - Gemini CLI doesn't support listing models)
    */
   public async getAvailableModels(): Promise<string[]> {
-    // Gemini CLI doesn't provide a way to list models
-    // Return common Gemini model names
-    return [
-      'gemini-pro',
-      'gemini-pro-vision',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash'
-    ];
+    try {
+      const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = yaml.load(configContent) as any;
+      
+      if (config?.gemini?.availableModels && Array.isArray(config.gemini.availableModels)) {
+        return config.gemini.availableModels;
+      }
+      
+      // Fallback to hardcoded list if config is not available
+      this.logger.warn('Could not load available models from config, using fallback list');
+      return [
+        'gemini-pro',
+        'gemini-pro-vision',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash'
+      ];
+    } catch (error) {
+      this.logger.warn(`Error loading config file: ${error}. Using fallback model list.`);
+      return [
+        'gemini-pro',
+        'gemini-pro-vision',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash'
+      ];
+    }
   }
 
   /**
