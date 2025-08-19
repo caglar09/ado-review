@@ -156,7 +156,7 @@ export class DiffFetcher {
   private async processFinalDiffChange(
     change: any,
     iteration: PullRequestIteration,
-    _workingDirectory?: string
+    workingDirectory?: string
   ): Promise<FileDiff | null> {
     const filePath = change.item?.path;
     if (!filePath) {
@@ -194,8 +194,26 @@ export class DiffFetcher {
           return header + '\n' + lines;
         }).join('\n');
       } else {
-        // Fallback to basic diff if hunks are not available
-         diffContent = this.createBasicDiff({ item: change.item, changeType: change.changeType }, iteration);
+        // Try to get real diff using git if working directory is available
+        if (workingDirectory) {
+          try {
+            this.logger.debug(`Attempting to get git diff for ${filePath}`);
+            diffContent = await this.gitManager.getDiff(
+              workingDirectory,
+              iteration.targetRefCommit.commitId,
+              iteration.sourceRefCommit.commitId,
+              filePath
+            );
+            this.logger.debug(`Successfully retrieved git diff for ${filePath}`);
+          } catch (gitError) {
+            this.logger.warn(`Failed to get git diff for ${filePath}: ${(gitError as Error).message}`);
+            // Fallback to basic diff if git fails
+            diffContent = this.createBasicDiff({ item: change.item, changeType: change.changeType }, iteration);
+          }
+        } else {
+          // Fallback to basic diff if working directory is not available
+          diffContent = this.createBasicDiff({ item: change.item, changeType: change.changeType }, iteration);
+        }
       }
 
       const hunks = this.parseDiffHunks(diffContent, filePath);
