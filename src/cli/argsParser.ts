@@ -1,6 +1,7 @@
 import { glob } from 'glob';
 import path from 'path';
 import fs from 'fs';
+import * as yaml from 'js-yaml';
 import { Logger } from '../core/logger.js';
 
 export interface ReviewOptions {
@@ -240,7 +241,7 @@ export class ArgsParser {
     }
 
     // Validate Gemini model name
-    const validModels = ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+    const validModels = this.getValidModelsFromConfig();
     if (!validModels.includes(options.model)) {
       this.logger.warn(`Unknown Gemini model: ${options.model}. Supported models: ${validModels.join(', ')}`);
     }
@@ -329,6 +330,28 @@ export class ArgsParser {
       return null;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Get valid models from defaults.yaml configuration
+   */
+  private getValidModelsFromConfig(): string[] {
+    try {
+      const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = yaml.load(configContent) as any;
+      
+      if (config?.gemini?.availableModels && Array.isArray(config.gemini.availableModels)) {
+        return config.gemini.availableModels;
+      }
+      
+      // Fallback to hardcoded list if config is not available
+      this.logger.warn('Could not load available models from config, using fallback list');
+      return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+    } catch (error) {
+      this.logger.warn(`Error loading config file: ${error}. Using fallback model list.`);
+      return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
     }
   }
 }

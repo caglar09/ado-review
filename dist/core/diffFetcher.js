@@ -131,7 +131,7 @@ class DiffFetcher {
             }
         }
         catch (error) {
-            this.logger.debug(`Could not get git diff for ${filePath}, using basic diff: ${error.message}`);
+            this.logger.warn(`Failed to get git diff for ${filePath}: ${error.message}`);
             diffContent = this.createBasicDiff(change, iteration);
         }
         const hunks = this.parseDiffHunks(diffContent, filePath);
