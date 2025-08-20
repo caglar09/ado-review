@@ -97,25 +97,22 @@ export declare class GeminiAdapter {
      */
     private parseReviewResponse;
     /**
-     * Validate and normalize findings
+     * Clean Gemini CLI output by removing dotenv messages and other noise
      */
-    private validateFindings;
+    private cleanGeminiOutput;
     /**
-     * Normalize severity to valid values
+     * Parse JSON with fallback handling for incomplete responses
      */
-    private normalizeSeverity;
+    private parseJsonWithFallback;
     /**
-     * Group findings by severity
+     * Extract partial findings from incomplete JSON
      */
-    private groupBySeverity;
+    private extractPartialFindings;
+    private fixJsonEscaping;
     /**
      * Apply custom prompt template with context data
      */
     private applyCustomTemplate;
-    /**
-     * Parse response as plain text (fallback)
-     */
-    private parseTextResponse;
     /**
      * Generate unique request ID
      */

@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/67</span>
+                <span class='fraction'>0/76</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>0/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/67</span>
+                <span class='fraction'>0/76</span>
             </div>
         
             
@@ -240,7 +240,26 @@
 <a name='L175'></a><a href='#L175'>175</a>
 <a name='L176'></a><a href='#L176'>176</a>
 <a name='L177'></a><a href='#L177'>177</a>
-<a name='L178'></a><a href='#L178'>178</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -250,12 +269,31 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -423,6 +461,7 @@
 <span class="cstat-no" title="statement not covered" >import chalk from 'chalk';</span>
 <span class="cstat-no" title="statement not covered" >import path, { join } from 'path';</span>
 <span class="cstat-no" title="statement not covered" >import { readFileSync } from 'fs';</span>
+<span class="cstat-no" title="statement not covered" >import * as yaml from 'js-yaml';</span>
 <span class="cstat-no" title="statement not covered" >import { Logger } from '../core/logger.js';</span>
 <span class="cstat-no" title="statement not covered" >import { ErrorHandler } from '../core/errorHandler.js';</span>
 <span class="cstat-no" title="statement not covered" >import { ReviewOrchestrator } from '../core/reviewOrchestrator.js';</span>
@@ -433,6 +472,24 @@ const program = <span class="cstat-no" title="statement not covered" >new Comman
 const logger = <span class="cstat-no" title="statement not covered" >new Logger();</span>
 const errorHandler = <span class="cstat-no" title="statement not covered" >new ErrorHandler(logger);</span>
 const configLoader = <span class="cstat-no" title="statement not covered" >new ConfigLoader(logger, errorHandler);</span>
+&nbsp;
+// Function to get default model from config
+function <span class="fstat-no" title="function not covered" >getDefaultModelFromConfig(</span>): string {
+<span class="cstat-no" title="statement not covered" >  try {</span>
+    const configPath = <span class="cstat-no" title="statement not covered" >join(__dirname, '..', 'config', 'defaults.yaml');</span>
+    const configContent = <span class="cstat-no" title="statement not covered" >readFileSync(configPath, 'utf8');</span>
+    const config = <span class="cstat-no" title="statement not covered" >yaml.load(configContent) as any;</span>
+    
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (config?.gemini?.defaultModel &amp;&amp; typeof config.gemini.defaultModel === 'string') {</span>
+<span class="cstat-no" title="statement not covered" >      return config.gemini.defaultModel;</span>
+    }
+    
+    // Fallback to hardcoded default if config is not available
+<span class="cstat-no" title="statement not covered" >    return 'gemini-pro';</span>
+  } catch (error) {
+<span class="cstat-no" title="statement not covered" >    return 'gemini-pro';</span>
+  }
+}
 &nbsp;
 // Read version from package.json
 const packageJsonPath = <span class="cstat-no" title="statement not covered" >join(__dirname, '../../package.json');</span>
@@ -460,7 +517,7 @@ const packageJson = <span class="cstat-no" title="statement not covered" >JSON.p
   .option('--exclude &lt;patterns...&gt;', 'File patterns to exclude', [])
   .option('--files &lt;files...&gt;', 'Specific files to review', [])
   .option('--all-files', 'Review all files (not just changed ones)', false)
-  .option('--model &lt;name&gt;', 'Gemini model to use', 'gemini-pro')
+  .option('--model &lt;name&gt;', 'Gemini model to use', getDefaultModelFromConfig())
   .option('--max-context-tokens &lt;number&gt;', 'Maximum context tokens for LLM', parseInt, 32000)
   .option('--ratelimit-batch &lt;number&gt;', 'Batch size for rate limiting', parseInt, 5)
   .option('--ratelimit-sleep-ms &lt;number&gt;', 'Sleep time between batches (ms)', parseInt, 1000)
@@ -601,7 +658,7 @@ const packageJson = <span class="cstat-no" title="statement not covered" >JSON.p
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-19T14:42:49.655Z
+                at 2025-08-19T18:37:26.787Z
             </div>
         <script src="../prettify.js"></script>
         <script>

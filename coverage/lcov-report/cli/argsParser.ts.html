@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/107</span>
+                <span class='fraction'>0/117</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/99</span>
+                <span class='fraction'>0/102</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/105</span>
+                <span class='fraction'>0/115</span>
             </div>
         
             
@@ -419,7 +419,26 @@
 <a name='L354'></a><a href='#L354'>354</a>
 <a name='L355'></a><a href='#L355'>355</a>
 <a name='L356'></a><a href='#L356'>356</a>
-<a name='L357'></a><a href='#L357'>357</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -754,6 +773,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -861,7 +899,7 @@ export interface ParsedPRInfo {
       allFiles: options.allFiles || false,
       
       // LLM configuration
-      model: options.model || 'gemini-pro',
+      model: options.model || this.getDefaultModelFromConfig(),
       maxContextTokens: options.maxContextTokens || 32000,
       
       // Rate limiting
@@ -1131,6 +1169,25 @@ export interface ParsedPRInfo {
 <span class="cstat-no" title="statement not covered" >      return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];</span>
     }
   }
+&nbsp;
+  private <span class="fstat-no" title="function not covered" >getDefaultModelFromConfig(</span>): string {
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const configPath = <span class="cstat-no" title="statement not covered" >path.join(__dirname, '..', 'config', 'defaults.yaml');</span>
+      const configContent = <span class="cstat-no" title="statement not covered" >fs.readFileSync(configPath, 'utf8');</span>
+      const config = <span class="cstat-no" title="statement not covered" >yaml.load(configContent) as any;</span>
+      
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (config?.gemini?.defaultModel &amp;&amp; typeof config.gemini.defaultModel === 'string') {</span>
+<span class="cstat-no" title="statement not covered" >        return config.gemini.defaultModel;</span>
+      }
+      
+      // Fallback to hardcoded default if config is not available
+<span class="cstat-no" title="statement not covered" >      this.logger.warn('Could not load default model from config, using fallback default');</span>
+<span class="cstat-no" title="statement not covered" >      return 'gemini-pro';</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      this.logger.warn(`Error loading config file: ${error}. Using fallback default model.`);</span>
+<span class="cstat-no" title="statement not covered" >      return 'gemini-pro';</span>
+    }
+  }
 }</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -1138,7 +1195,7 @@ export interface ParsedPRInfo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-19T14:42:49.590Z
+                at 2025-08-19T18:37:26.676Z
             </div>
         <script src="../prettify.js"></script>
         <script>

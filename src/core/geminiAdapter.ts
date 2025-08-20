@@ -257,7 +257,7 @@ export class GeminiAdapter {
         
         if (code === 0) {
           resolve({
-            stdout: stdout.trim(),
+            stdout: this.cleanGeminiOutput(stdout.trim()),
             stderr: stderr.trim()
           });
         } else {
@@ -397,114 +397,209 @@ export class GeminiAdapter {
    */
   private parseReviewResponse(content: string): ReviewResult {
     try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/{[\s\S]*}/);
+      // Clean the content first - remove dotenv messages and other noise
+      const cleanedContent = this.cleanGeminiOutput(content);
       
-      if (jsonMatch) {
-        const jsonStr = jsonMatch[1] || jsonMatch[0];
-        const parsed = JSON.parse(jsonStr);
+      // Extract JSON from the cleaned content
+      const jsonMatch = cleanedContent.match(/{[\s\S]*}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+      
+      const jsonStr = jsonMatch[0];
+      
+      // Try to parse with fallback handling
+      const parseResult = this.parseJsonWithFallback(jsonStr);
+      
+      if (parseResult.success && parseResult.data) {
+        const parsed = parseResult.data;
         
-        const findings = this.validateFindings(parsed.findings || []);
-        const metadata = {
-          reviewedFiles: new Set(findings.map(f => f.file)).size,
-          reviewedLines: findings.reduce((sum, f) => sum + (f.endLine ? f.endLine - f.line + 1 : 1), 0),
-          totalIssues: findings.length,
-          issuesBySeverity: this.groupBySeverity(findings)
-        };
+        // Validate the structure
+        if (!parsed.findings || !Array.isArray(parsed.findings)) {
+          throw new Error('Invalid response structure: missing findings array');
+        }
         
         return {
-          findings,
-          summary: parsed.summary || 'Review completed',
-          metadata
+          findings: parsed.findings,
+          summary: parsed.summary || 'No summary provided'
         };
       } else {
-        // Fallback to text parsing
-        return this.parseTextResponse(content);
+        // JSON parsing failed, try to extract partial findings
+        this.logger.warn(`JSON parsing failed: ${parseResult.error}. Attempting to extract partial findings.`);
+        
+        const partialFindings = this.extractPartialFindings(jsonStr);
+        
+        if (partialFindings.length > 0) {
+          this.logger.info(`Successfully extracted ${partialFindings.length} findings from incomplete response`);
+          return {
+            findings: partialFindings,
+            summary: 'Partial review completed (response was incomplete)'
+          };
+        } else {
+          throw new Error(`Failed to parse review response: ${parseResult.error}`);
+        }
       }
     } catch (error) {
-      this.logger.warn(`Failed to parse JSON response: ${(error as Error).message}`);
-      this.logger.debug(`Response content: ${content}`);
-      return this.parseTextResponse(content);
+      this.logger.error('Failed to parse Gemini response:', error);
+      throw new Error(`Failed to parse review response: ${(error as Error).message}`);
     }
   }
 
   /**
-   * Validate and normalize findings
+   * Clean Gemini CLI output by removing dotenv messages and other noise
    */
-  private validateFindings(findings: any[]): ReviewFinding[] {
-    const validated: ReviewFinding[] = [];
-    
-    for (const finding of findings) {
-      if (!finding.file || !finding.message) {
-        this.logger.warn('Skipping invalid finding: missing file or message');
-        continue;
-      }
-      
-      if (typeof finding.line !== 'number' || finding.line < 1) {
-        this.logger.warn('Skipping invalid finding: invalid line number');
-        continue;
-      }
-      
-      const validatedFinding: ReviewFinding = {
-        file: String(finding.file),
-        line: Number(finding.line),
-        severity: this.normalizeSeverity(finding.severity),
-        message: String(finding.message)
-      };
-      
-      if (finding.endLine) {
-        validatedFinding.endLine = Number(finding.endLine);
-      }
-      
-      if (finding.suggestion) {
-        validatedFinding.suggestion = String(finding.suggestion);
-      }
-      
-      if (finding.ruleId) {
-        validatedFinding.ruleId = String(finding.ruleId);
-      }
-      
-      if (finding.category) {
-        validatedFinding.category = String(finding.category);
-      }
-      
-      validated.push(validatedFinding);
-    }
-    
-    return validated;
+  private cleanGeminiOutput(content: string): string {
+    // Remove common CLI noise and formatting
+    return content
+      // Remove dotenv messages that appear at the beginning
+      .replace(/^\[dotenv@[^\]]+\]\s+injecting\s+env\s+\([^)]+\)\s+from\s+\.env\s*/gm, '')
+      // Remove other dotenv-related messages
+      .replace(/^\[dotenv[^\]]*\][^\n]*\n?/gm, '')
+      // Remove ```json markers
+      .replace(/^\s*```json\s*/gm, '')
+      // Remove closing ``` markers
+      .replace(/\s*```\s*$/gm, '')
+      // Remove any other ``` markers
+      .replace(/^\s*```\s*/gm, '')
+      // Remove intro text
+      .replace(/^\s*Here's the review.*$/gm, '')
+      // Remove analysis text
+      .replace(/^\s*Based on.*$/gm, '')
+      // Remove any leading/trailing whitespace
+      .trim();
   }
 
   /**
-   * Normalize severity to valid values
+   * Parse JSON with fallback handling for incomplete responses
    */
-  private normalizeSeverity(severity: any): 'error' | 'warning' | 'info' {
-    if (typeof severity === 'string') {
-      const lower = severity.toLowerCase();
-      if (lower === 'error' || lower === 'critical') return 'error';
-      if (lower === 'warning' || lower === 'warn') return 'warning';
-      if (lower === 'info' || lower === 'information') return 'info';
+  private parseJsonWithFallback(jsonStr: string): { success: boolean; data?: any; error?: string } {
+    try {
+      // First attempt: try to parse as-is
+      const parsed = JSON.parse(jsonStr);
+      return { success: true, data: parsed };
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      
+      // Try to fix common JSON escaping issues
+      try {
+        const fixedJsonStr = this.fixJsonEscaping(jsonStr);
+        const parsed = JSON.parse(fixedJsonStr);
+        return { success: true, data: parsed };
+      } catch (fixError) {
+        // If it's an "Unterminated string" or similar error, the JSON might be truncated
+        if (errorMessage.includes('Unterminated string') || 
+            errorMessage.includes('Unexpected end of JSON input') ||
+            errorMessage.includes('Expected property name')) {
+          return { success: false, error: `Incomplete JSON response: ${errorMessage}` };
+        }
+        
+        return { success: false, error: errorMessage };
+      }
     }
-    return 'warning'; // Default
   }
 
   /**
-   * Group findings by severity
+   * Extract partial findings from incomplete JSON
    */
-  private groupBySeverity(findings: ReviewFinding[]): Record<string, number> {
-    const groups: Record<string, number> = {
-      error: 0,
-      warning: 0,
-      info: 0
-    };
+  private extractPartialFindings(jsonStr: string): ReviewFinding[] {
+    const findings: ReviewFinding[] = [];
     
-    for (const finding of findings) {
-         if (finding?.severity) {
-           groups[finding.severity] = (groups[finding.severity] || 0) + 1;
-         }
-       }
+    try {
+      // Look for complete finding objects in the incomplete JSON
+      // Use regex to find individual finding objects that are complete
+      const findingPattern = /\{\s*"file":\s*"([^"]+)"[^}]*"line":\s*(\d+)[^}]*"severity":\s*"(error|warning|info)"[^}]*"message":\s*"([^"]+)"[^}]*\}/g;
+      
+      let match;
+      while ((match = findingPattern.exec(jsonStr)) !== null) {
+        const [, file, lineStr, severity, message] = match;
+        
+        // Validate required fields
+        if (!file || !lineStr || !severity || !message) {
+          continue;
+        }
+        
+        // Try to extract additional fields from the full match
+        const fullMatch = match[0];
+        const endLineMatch = fullMatch.match(/"endLine":\s*(\d+)/);
+        const suggestionMatch = fullMatch.match(/"suggestion":\s*"([^"]+)"/);
+        const ruleIdMatch = fullMatch.match(/"ruleId":\s*"([^"]+)"/);
+        const categoryMatch = fullMatch.match(/"category":\s*"([^"]+)"/);
+        
+        const finding: ReviewFinding = {
+          file,
+          line: parseInt(lineStr, 10),
+          severity: severity as 'error' | 'warning' | 'info',
+          message
+        };
+        
+        if (endLineMatch && endLineMatch[1]) {
+          finding.endLine = parseInt(endLineMatch[1], 10);
+        }
+        
+        if (suggestionMatch && suggestionMatch[1]) {
+          finding.suggestion = suggestionMatch[1];
+        }
+        
+        if (ruleIdMatch && ruleIdMatch[1]) {
+          finding.ruleId = ruleIdMatch[1];
+        }
+        
+        if (categoryMatch && categoryMatch[1]) {
+          finding.category = categoryMatch[1];
+        }
+        
+        findings.push(finding);
+      }
+      
+      this.logger.debug(`Extracted ${findings.length} partial findings from incomplete JSON`);
+    } catch (error) {
+      this.logger.warn(`Failed to extract partial findings: ${(error as Error).message}`);
+    }
     
-    return groups;
+    return findings;
   }
+
+  private fixJsonEscaping(jsonStr: string): string {
+    // Fix common JSON escaping issues in Gemini responses
+    let fixed = jsonStr;
+    
+    try {
+      // First attempt: try to parse as-is
+      JSON.parse(fixed);
+      return fixed;
+    } catch (error) {
+      // If parsing fails, try a more aggressive approach
+      // Parse the JSON structure manually and fix string values
+      
+      // Find all string values that contain unescaped quotes
+      // This regex finds: "key": "value with potential issues"
+      fixed = fixed.replace(/"(\w+)":\s*"((?:[^"\\]|\\.)*)"(?=\s*[,}])/g, (match, key, value) => {
+        // Skip if the value is already properly escaped
+        try {
+          JSON.parse(`{"${key}": "${value}"}`);
+          return match; // Already valid, don't change
+        } catch {
+          // Fix the value by properly escaping it
+          const escapedValue = value
+            .replace(/\\/g, '\\\\') // Escape backslashes first
+            .replace(/"/g, '\\"') // Escape quotes
+            .replace(/\n/g, '\\n') // Escape newlines
+            .replace(/\r/g, '\\r') // Escape carriage returns
+            .replace(/\t/g, '\\t') // Escape tabs
+            .replace(/\f/g, '\\f') // Escape form feeds
+            .replace(/\b/g, '\\b'); // Escape backspaces
+          
+          return `"${key}": "${escapedValue}"`;
+        }
+      });
+      
+      return fixed;
+    }
+  }
+
+
+
+
 
   /**
    * Apply custom prompt template with context data
@@ -545,44 +640,7 @@ export class GeminiAdapter {
     return result;
   }
 
-  /**
-   * Parse response as plain text (fallback)
-   */
-  private parseTextResponse(content: string): ReviewResult {
-    this.logger.debug('Parsing response as plain text');
-    
-    // Simple text parsing - look for common patterns
-    const findings: ReviewFinding[] = [];
-    const lines = content.split('\n');
-    
-    for (let i = 0; i < lines.length; i++) {
-        const lineContent = lines[i];
-        if (lineContent) {
-          const line = lineContent.trim();
-          if (line && (line.includes('ERROR:') || line.includes('WARNING:') || line.includes('INFO:'))) {
-            findings.push({
-              file: 'unknown',
-              line: 1,
-              severity: line.includes('ERROR:') ? 'error' : line.includes('WARNING:') ? 'warning' : 'info',
-              message: line
-            });
-          }
-        }
-      }
-    
-    const metadata = {
-      reviewedFiles: new Set(findings.map(f => f.file)).size,
-      reviewedLines: findings.reduce((sum, f) => sum + (f.endLine ? f.endLine - f.line + 1 : 1), 0),
-      totalIssues: findings.length,
-      issuesBySeverity: this.groupBySeverity(findings)
-    };
 
-    return {
-      findings,
-      summary: 'Parsed from text response',
-      metadata
-    };
-  }
 
   /**
    * Generate unique request ID
