@@ -1,0 +1,3397 @@
+You are an expert code reviewer. Please review the following code changes according to the provided guidelines and rules.
+
+## Project Guidelines
+## Azure DevOps Review Rules
+Source: /Users/caglar/Desktop/audit.0.74.x/v5/field-v5/.trae/rules/azdo_review_rules.md
+
+Azure DevOps Review Rules
+
+Role: Git-Aware Code Review Assistant
+
+You are an automated code review assistant that, after a feature or fix branch has been pushed, inspects exactly the files changed in that branch and performs a clean-code review. Your goal is to help developers improve readability, maintainability, and correctness without altering functionality.
+
+Context
+
+You are a senior TypeScript developer on React Native mobile application development. Your task is to act as a code reviewer of a Pull Request: - Use bullet points if you have multiple comments. - If there are any bugs, highlight them with ⚠️ or 🐞. - If there are major performance problems, highlight them with 🚀 or 🐢. - Provide details on missed use of best-practices using 💡. - Do not highlight minor issues, indent issues and nitpicks. - Provide clear and concise feedback. - Provide code examples for the issue where possible. - Only provide instructions for improvements. - If you have no instructions respond with NO_COMMENT only, otherwise provide your instructions. You are provided with the code changes (diffs) in a unidiff format. The response should be in markdown format in Turkish, and use appropriate icons for: - ⚠️ / 🐞 → Bugs - 🚀 / 🐢 → Major performance issues - 💡 / ✅ → Suggestions, best practice improvements
+
+## React Native Field App - Architecture Guide
+Source: /Users/caglar/Desktop/audit.0.74.x/v5/field-v5/.trae/rules/project_rules.md
+
+React Native Field App - Architecture Guide
+
+<!-- RULE -->
+React Native
+You are an expert in TypeScript, React Native, Expo, and Mobile App Development.
+
+Code Style and Structure:
+- Write concise, type-safe TypeScript code.
+- Use functional components and hooks over class components.
+- Ensure components are modular, reusable, and maintainable.
+- Organize files by feature, grouping related components, hooks, and styles.
+
+Naming Conventions:
+- Use camelCase for variable and function names (e.g., isFetchingData, handleUserInput).
+- Use PascalCase for component names (e.g., UserProfile, ChatScreen).
+- Directory names should be lowercase and hyphenated (e.g., user-profile, chat-screen).
+
+TypeScript Usage:
+- Use TypeScript for all components, favoring interfaces for props and state.
+- Enable strict typing in tsconfig.json.
+- Avoid using any; strive for precise types.
+- Utilize React.FC for defining functional components with props.
+
+Performance Optimization:
+- Minimize useEffect, useState, and heavy computations inside render methods.
+- Use React.memo() for components with static props to prevent unnecessary re-renders.
+- Optimize FlatLists with props like removeClippedSubviews, maxToRenderPerBatch, and windowSize.
+- Use getItemLayout for FlatLists when items have a consistent size to improve performance.
+- Avoid anonymous functions in renderItem or event handlers to prevent re-renders.
+
+UI and Styling:
+- Use consistent styling, either through StyleSheet.create() or Styled Components.
+- Ensure responsive design by considering different screen sizes and orientations.
+- Optimize image handling using libraries designed for React Native, like react-native-fast-image.
+
+Best Practices:
+- Follow React Native's threading model to ensure smooth UI performance.
+- Utilize Expo's EAS Build and Updates for continuous deployment and Over-The-Air (OTA) updates.
+- Use React Navigation for handling navigation and deep linking with best practices.
+<!-- RULE !-->
+
+🏗️ Application Overview
+
+This is a comprehensive field audit and management React Native application built with TypeScript, featuring modular architecture, offline capabilities, and real-time synchronization. The app serves field workers, auditors, and managers in conducting inspections, managing equipment, processing requests, and handling various operational tasks.
+
+📱 Technology Stack
+
+- Framework: React Native 0.74.5
+- Language: TypeScript 5.0.4
+- State Management: Redux Toolkit + RTK Query
+- Navigation: React Navigation v6
+- UI Components: Custom component library + Lena UI Kit
+- Storage: Redux Persist + MMKV
+- Networking: Axios with custom interceptors
+- Background Tasks: React Native Background Fetch
+- Maps: React Native Maps with clustering
+- Camera: React Native Vision Camera
+- Real-time: WebSocket + Firebase
+- Internationalization: React Native i18n
+
+🎯 Core Architecture Principles
+
+1. Feature-Driven Development
+- Modular Structure: Each business domain is a self-contained feature module
+- Bounded Contexts: Clear boundaries between features
+- Minimal Cross-Dependencies: Features communicate through well-defined interfaces
+
+2. Layered Architecture
+[code block]
+
+3. Domain-Driven Design
+- Aggregates: Units, Tasks, Requests, Projects, Orders
+- Value Objects: Types, Models, View Models
+- Services: API services, Background services, Event managers
+
+📁 Detailed Directory Structure
+
+🔗 /api/ - External Communication Layer
+[code block]
+
+Purpose: Centralized API communication with proper error handling, logging, and offline support.
+
+🎨 /assets/ - Static Resources
+[code block]
+
+Purpose: Organized static assets with TypeScript definitions for type safety.
+
+🧩 /components/ - Shared UI Components (200+ components)
+[code block]
+
+Key Component Categories:
+- Form Components: custom-text-input, searchable-picker-bas, dynamic-fields
+- List Components: data-list-view, flat-list-refreshing-wrapper
+- Navigation: tab-swipeable-view-modes, header-action-button
+- Media: custom-fast-image, video-viewer, camera-view
+- Business: task-row, audit-row, request-row
+
+⚙️ /config/ - Application Configuration
+[code block]
+
+🔄 /context/ - React Context Providers (20+ contexts)
+[code block]
+
+Key Contexts:
+- TaskExecutionContext: Task workflow management
+- RequestDetailContext: Request processing logic
+- UnitListContext: Unit management state
+- FlowProjectFormFillingContext: Form workflow
+
+🎯 /core/ - System Foundation
+[code block]
+
+🏢 /features/ - Business Domain Modules
+
+Each feature follows a consistent structure:
+
+[code block]
+
+📱 Feature Domains:
+
+🔐 auth/ - Authentication & Authorization
+- User login/logout flows
+- Token management
+- Biometric authentication
+- Multi-environment support
+
+📊 dashboard/ - Analytics & Overview
+- KPI visualization
+- Chart components
+- Real-time data display
+- Performance metrics
+
+✅ tasks/ - Task & Audit Management
+- Form-based task execution
+- Offline task completion
+- Multi-step workflows
+- File attachments and signatures
+- QR/Barcode scanning
+
+📋 requests/ - Service Request Management
+- Request creation and approval
+- Workflow management
+- Document attachments
+- Status tracking
+
+🏭 units/ - Equipment & Unit Management
+- Equipment registration
+- Maintenance schedules
+- Location tracking
+- Equipment hierarchy
+
+📁 projects/ - Project Management
+- Project creation and tracking
+- Team collaboration
+- Document management
+- Timeline management
+
+🌾 field-projects/ - Field-Specific Projects
+- Location-based projects
+- GPS integration
+- Field data collection
+- Environmental monitoring
+
+📦 orders/ - Order & Inventory Management
+- Product ordering
+- Inventory tracking
+- Transfer management
+- Stock movements
+
+🗺️ routes/ - Route Planning & Navigation
+- Route optimization
+- GPS tracking
+- Visit scheduling
+- Location services
+
+💬 messages/ - Communication System
+- In-app messaging
+- Push notifications
+- Team communication
+- File sharing
+
+👤 my-account/ - User Profile & Settings
+- Profile management
+- Preferences
+- Security settings
+- App configuration
+
+🔄 shared/ - Shared Business Components
+- Common business logic
+- Shared workflows
+- Cross-feature components
+
+🧠 /hooks/ - Custom React Hooks
+[code block]
+
+🌐 /i18n/ - Internationalization
+[code block]
+
+📚 /lib/ - Third-Party Integrations
+[code block]
+
+🗃️ /models/ - Data Models & Business Entities
+[code block]
+
+Key Models:
+- unit.js, equipment.js, task.js
+- request.js, project.js, invoice.js
+- flow-project.js, service-form.js
+
+🧭 /navigation/ - Navigation Configuration
+[code block]
+
+📋 /schemas/ - Validation & Data Schemas
+[code block]
+
+🏪 /store/ - State Management
+[code block]
+
+📝 /types/ - TypeScript Type Definitions
+[code block]
+
+🔄 Data Flow Architecture
+
+1. User Interaction Flow
+[code block]
+
+2. Background Sync Flow
+[code block]
+
+3. Real-time Updates
+[code block]
+
+🏗️ Development Patterns
+
+1. Component Structure Pattern
+[code block]
+
+2. Screen Structure Pattern
+[code block]
+
+3. Feature Export Pattern
+[code block]
+
+4. Context Pattern
+[code block]
+
+🔧 Technical Implementation Details
+
+State Management Strategy
+- Global State: Redux Toolkit for app-wide state
+- Feature State: Feature-specific slices
+- Server State: RTK Query for API data
+- Local State: React Context for feature-specific state
+- Form State: Formik for complex forms
+
+🔄 Redux Slice Development Guidelines
+
+Slice Structure Pattern
+All Redux slices must follow this consistent structure:
+
+[code block]
+
+Naming Conventions
+
+File Naming
+- Use kebab-case with .slice.ts suffix: auth.slice.ts, environment.slice.ts
+- Place in appropriate directory: /store/slices/ for global slices, /features/{domain}/store/slices/ for feature-specific slices
+
+Slice Naming
+- Use camelCase for slice names: "auth", "environment", "appSetting"
+- Keep names concise but descriptive
+
+State Interface Naming
+- Use PascalCase with State suffix: AuthSliceInitialState, CommonContextInitialStateType
+- Include comprehensive JSDoc comments for all properties
+
+Action Naming
+- Use camelCase with descriptive verbs: setAccount, clearAccount, setIsAuthenticated
+- Prefix with action type: set, clear, update, toggle, reset
+- Always include resetState action for state cleanup
+
+Selector Naming
+- Use camelCase with descriptive names: selectIsTaskStarting, selectVersionNoteModal
+- Prefix with select for basic selectors
+- Use get prefix for computed selectors: getAuthToken
+
+Hook Naming
+- Use camelCase with use prefix: useAuthStore, useIsTaskStarting
+- Create specific hooks for commonly used state: useAuthToken, useSelectedEnvironment
+- Provide static accessors with Static suffix: getAuthStoreStatic
+
+State Management Rules
+
+State Structure
+1. Flat State: Keep state structure as flat as possible
+2. Normalized Data: Use normalized structures for complex data
+3. Loading States: Include loading flags for async operations
+4. Initialization: Track initialization state when needed
+5. Error Handling: Include error states for failed operations
+
+Reducer Guidelines
+1. Immutable Updates: Use Immer-powered mutations (RTK default)
+2. Pure Functions: Reducers must be pure functions
+3. Single Responsibility: Each action should have a single, clear purpose
+4. State Reset: Always provide a way to reset state to initial values
+5. Validation: Validate payload data when necessary
+
+Action Payload Types
+1. Typed Payloads: Always use TypeScript for payload types
+2. Minimal Payloads: Include only necessary data in payloads
+3. Consistent Structure: Use consistent payload structures across actions
+4. Optional Properties: Use optional properties when appropriate
+
+Integration Patterns
+
+RTK Query Integration
+[code block]
+
+External Action Handling
+[code block]
+
+Context Integration
+[code block]
+
+Performance Considerations
+
+1. Memoized Selectors: Use createSelector for computed values
+2. Granular Subscriptions: Create specific hooks for specific state parts
+3. Avoid Over-Normalization: Balance normalization with complexity
+4. Batch Updates: Group related state updates when possible
+5. Lazy Loading: Load slice state only when needed
+
+Testing Guidelines
+
+1. Reducer Testing: Test all reducer actions with various payloads
+2. Selector Testing: Test selectors with different state shapes
+3. Hook Testing: Test custom hooks with React Testing Library
+4. Integration Testing: Test slice integration with components
+5. Edge Cases: Test error states and edge conditions
+
+Documentation Requirements
+
+1. JSDoc Comments: Document all interfaces, actions, and complex logic
+2. Type Annotations: Use comprehensive TypeScript types
+3. Usage Examples: Provide examples for complex patterns
+4. Migration Guides: Document breaking changes and migrations
+5. Performance Notes: Document performance considerations
+
+Navigation Architecture
+- Main Navigation: Bottom Tab Navigator
+- Feature Navigation: Stack Navigators per feature
+- Modal Navigation: Modal stack for overlays
+- Deep Linking: Custom URL scheme support
+
+Offline Capabilities
+- Queue System: Background task queue for offline actions
+- Data Sync: Automatic synchronization when online
+- Conflict Resolution: Last-write-wins with timestamp
+- Storage: MMKV for performance-critical data
+
+Performance Optimizations
+- Lazy Loading: Feature-based code splitting
+- Image Optimization: Custom fast image component
+- List Virtualization: FlashList for large datasets
+- Memory Management: Proper cleanup and unmounting
+
+Security Measures
+- Token Management: Secure token storage and refresh
+- Root Detection: Device security validation
+- Data Encryption: Sensitive data encryption
+- Network Security: Certificate pinning and validation
+
+📊 Quality Assurance
+
+Code Quality Tools
+- ESLint: Code linting with custom rules
+- Prettier: Code formatting
+- TypeScript: Static type checking
+- Reactotron: Development debugging
+
+Testing Strategy
+- Unit Tests: Jest for utility functions
+- Component Tests: React Native Testing Library
+- Integration Tests: Feature workflow testing
+- E2E Tests: Detox for complete user flows
+
+Performance Monitoring
+- Sentry: Error tracking and performance monitoring
+- Custom Metrics: App-specific performance tracking
+- Memory Profiling: Development memory leak detection
+
+🚀 Deployment & Distribution
+
+Build Configuration
+- Environment Management: Multiple build variants
+- Code Push: Hot updates for non-native changes
+- Bundle Analysis: Bundle size optimization
+- Asset Optimization: Image and font optimization
+
+Distribution Strategy
+- Internal Distribution: Enterprise app distribution
+- Testing: Beta testing through TestFlight/Firebase
+- Production: App Store deployment
+- Updates: OTA updates for rapid deployment
+
+This architecture ensures a scalable, maintainable, and high-performance React Native application that can handle complex business requirements while providing excellent user experience both online and offline.
+
+
+## Review Rules
+{
+  "name": "merged",
+  "version": "1.0.0",
+  "description": "Merged from 1 rule sets",
+  "rules": [
+    {
+      "id": "pr-scope-check",
+      "name": "PR Scope and Size",
+      "description": "PRs should be focused and reasonably sized for easy review",
+      "severity": "warning",
+      "category": "general",
+      "suggestion": "Consider breaking this PR into smaller, focused changes. Large PRs are difficult to review and have higher error risk. Follow feature-driven development principles.",
+      "enabled": true
+    },
+    {
+      "id": "no-binary-files-in-code",
+      "name": "No Binary Files in Source Code",
+      "description": "Binary files should not be added to source code directories",
+      "severity": "warning",
+      "category": "general",
+      "suggestion": "Move images to assets/images/ directory. Use SVG format for scalable graphics when possible. Prefer react-native-fast-image for optimized image management.",
+      "enabled": true
+    },
+    {
+      "id": "typescript-strict-mode",
+      "name": "TypeScript Strict Mode",
+      "description": "TypeScript strict mode should be enabled in all tsconfig files",
+      "severity": "error",
+      "category": "typescript",
+      "suggestion": "Enable strict mode for stronger type safety. isolatedModules should be true for React Native compatibility. Update tsconfig.json accordingly.",
+      "enabled": true
+    },
+    {
+      "id": "no-any-type",
+      "name": "Any Type Usage Prohibited",
+      "description": "Usage of 'any' type is strictly prohibited",
+      "severity": "error",
+      "category": "typescript",
+      "suggestion": "Define specific types. Use union types, generics, or unknown. Type safety is critical in React Native projects.",
+      "enabled": true
+    },
+    {
+      "id": "proper-type-imports",
+      "name": "Type-Only Import Usage",
+      "description": "TypeScript types should use type-only imports",
+      "severity": "info",
+      "category": "typescript",
+      "suggestion": "Use 'import type' for types only. This improves build performance and prevents types from being included in runtime.",
+      "enabled": true
+    },
+    {
+      "id": "proper-interface-naming",
+      "name": "Interface Naming Rules",
+      "description": "Interfaces should use PascalCase and descriptive names",
+      "severity": "warning",
+      "category": "typescript",
+      "suggestion": "Interface names should be PascalCase and avoid Hungarian notation (I prefix). Examples: UserProfile, ApiResponse, NavigationProps",
+      "enabled": true
+    },
+    {
+      "id": "rtk-query-usage",
+      "name": "RTK Query Usage for API Calls",
+      "description": "All API calls should use RTK Query",
+      "severity": "error",
+      "category": "architecture",
+      "suggestion": "Create RTK Query endpoints instead of direct API calls. Add endpoints following project patterns under features/{domain}/store/api/.",
+      "enabled": true
+    },
+    {
+      "id": "redux-slice-structure",
+      "name": "Redux Slice Structure",
+      "description": "Redux slices should comply with RTK standards",
+      "severity": "error",
+      "category": "architecture",
+      "suggestion": "Use Redux Toolkit createSlice. Name, initialState, and reducers are mandatory. Prefer createAsyncThunk for async operations.",
+      "enabled": true
+    },
+    {
+      "id": "context-usage-pattern",
+      "name": "Context Usage Pattern",
+      "description": "Context usage should follow createDataContext pattern",
+      "severity": "warning",
+      "category": "architecture",
+      "suggestion": "Follow the pattern in context/createDataContext.tsx for consistency. Avoid using createContext directly.",
+      "enabled": true
+    },
+    {
+      "id": "flatlist-optimization",
+      "name": "FlatList Performance",
+      "description": "FlatList should be optimized for performance",
+      "severity": "warning",
+      "category": "performance",
+      "suggestion": "Add props like removeClippedSubviews, maxToRenderPerBatch, windowSize, getItemLayout. Consider using @shopify/flash-list for higher performance.",
+      "enabled": true
+    },
+    {
+      "id": "memo-usage",
+      "name": "React.memo Usage",
+      "description": "React.memo should be used for heavy components",
+      "severity": "info",
+      "category": "performance",
+      "suggestion": "Wrap expensive components with React.memo to prevent unnecessary renders. Pay attention to dependency management with useCallback.",
+      "enabled": true
+    },
+    {
+      "id": "image-optimization",
+      "name": "Image Optimization",
+      "description": "Optimized image components should be used",
+      "severity": "warning",
+      "category": "performance",
+      "suggestion": "Use react-native-fast-image for better performance and caching. Import from components/custom-fast-image for common usage.",
+      "enabled": true
+    },
+    {
+      "id": "test-id-requirement",
+      "name": "Test ID Requirement",
+      "description": "Interactive components should have testID",
+      "severity": "error",
+      "category": "testing",
+      "suggestion": "Add testID to interactive components. Use naming from config/testids.ts for consistency.",
+      "enabled": true
+    },
+    {
+      "id": "unit-test-coverage",
+      "name": "Unit Test Coverage",
+      "description": "Unit tests should be written for new utility functions and business logic",
+      "severity": "warning",
+      "category": "testing",
+      "suggestion": "Create .test.ts files for new utility functions and controllers. Use Jest and react-test-renderer.",
+      "enabled": true
+    },
+    {
+      "id": "detox-e2e-patterns",
+      "name": "Detox E2E Test Pattern",
+      "description": "Detox pattern should be followed in E2E tests",
+      "severity": "info",
+      "category": "testing",
+      "suggestion": "Follow the existing Detox test pattern in e2e/ directory. Use proper device interactions and assertions.",
+      "enabled": true
+    },
+    {
+      "id": "mmkv-storage",
+      "name": "MMKV Storage Usage",
+      "description": "MMKV should be used for local storage",
+      "severity": "error",
+      "category": "security",
+      "suggestion": "Use MMKV instead of AsyncStorage for more secure and performant storage. Import from StorageOperations in lib/storage-operations.",
+      "enabled": true
+    },
+    {
+      "id": "sensitive-data-protection",
+      "name": "Sensitive Data Protection",
+      "description": "Sensitive data should not be logged or exposed",
+      "severity": "error",
+      "category": "security",
+      "suggestion": "Do not log passwords/tokens and similar data. Use proper log levels.",
+      "enabled": true
+    },
+    {
+      "id": "ssl-pinning-compliance",
+      "name": "SSL Pinning Compliance",
+      "description": "Network requests should be SSL pinning compliant",
+      "severity": "error",
+      "category": "security",
+      "suggestion": "Make all network requests with HTTPS. Comply with SSL pinning settings in ssl_config.json.",
+      "enabled": true
+    },
+    {
+      "id": "sentry-monitoring",
+      "name": "Sentry Error Monitoring",
+      "description": "Critical errors should be reported to Sentry",
+      "severity": "warning",
+      "category": "monitoring",
+      "suggestion": "Report critical errors with SentryMobile or SentryBackend from lib/sentry.",
+      "enabled": true
+    },
+    {
+      "id": "import-organization",
+      "name": "Import Organization",
+      "description": "Import statements should be organized consistently",
+      "severity": "warning",
+      "category": "code-quality",
+      "suggestion": "Follow ESLint simple-import-sort rule: React first, then third-party, finally local imports. Use absolute paths from tsconfig.json.",
+      "enabled": true
+    },
+    {
+      "id": "component-structure",
+      "name": "Component Structure",
+      "description": "Components should follow the established structure",
+      "severity": "info",
+      "category": "code-quality",
+      "suggestion": "Component structure: imports → types → component → controller hook → style. Separate business logic with controller pattern.",
+      "enabled": true
+    },
+    {
+      "id": "file-naming-convention",
+      "name": "File Naming Rules",
+      "description": "Files should follow established naming conventions",
+      "severity": "warning",
+      "category": "code-quality",
+      "suggestion": "Component files should be PascalCase, util files camelCase, directories kebab-case.",
+      "enabled": true
+    },
+    {
+      "id": "proper-exports",
+      "name": "Proper Export Pattern",
+      "description": "Consistent export pattern should be used",
+      "severity": "info",
+      "category": "code-quality",
+      "suggestion": "Use barrel exports (index.ts) in feature modules. Export types and interfaces separately.",
+      "enabled": true
+    },
+    {
+      "id": "localization-files",
+      "name": "Localization Files",
+      "description": "Text content should be taken from backend localization files",
+      "severity": "warning",
+      "category": "i18n",
+      "suggestion": "Use localization instead of hardcoded strings.",
+      "enabled": true
+    },
+    {
+      "id": "deep-link-config",
+      "name": "Deep Link Configuration",
+      "description": "Deep link redirections should be secure and scoped",
+      "severity": "info",
+      "category": "navigation",
+      "suggestion": "Restrict wildcard usage and perform parameter validation.",
+      "enabled": true
+    },
+    {
+      "id": "react-native-new-architecture",
+      "name": "React Native New Architecture Compatibility",
+      "description": "Native modules should be compatible with New Architecture",
+      "severity": "info",
+      "category": "react-native",
+      "suggestion": "Use TurboModules and Fabric components when possible.",
+      "enabled": true
+    },
+    {
+      "id": "proper-navigation-typing",
+      "name": "Navigation Types",
+      "description": "Navigation types should be properly defined",
+      "severity": "warning",
+      "category": "react-native",
+      "suggestion": "Define navigation parameter types in features/{domain}/navigation/type.ts.",
+      "enabled": true
+    },
+    {
+      "id": "background-task-patterns",
+      "name": "Background Task Patterns",
+      "description": "Background tasks should be done with proper patterns",
+      "severity": "warning",
+      "category": "react-native",
+      "suggestion": "Follow the pattern in core/utils/background-fetch. Perform proper registration and cleanup operations.",
+      "enabled": true
+    }
+  ]
+}
+
+## Code Changes to Review
+### File: /__mocks__/@react-native-community/geolocation.js
+
+#### Hunk: Lines 1-9 (add)
+```diff
++export default {
++    addListener: jest.fn(),
++    getCurrentPosition: jest.fn(),
++    removeListeners: jest.fn(),
++    requestAuthorization: jest.fn(),
++    setConfiguration: jest.fn(),
++    startObserving: jest.fn(),
++    stopObserving: jest.fn()
++  };
+```
+
+### File: /__tests__/app/lib/location-helper.test.ts
+
+#### Hunk: Lines 1-591 (edit)
+```diff
+-import Geolocation, { GeolocationError, GeolocationResponse } from "@react-native-community/geolocation";
++import { isEmulator } from "react-native-device-info";
++import { isMockingLocation } from "react-native-turbo-mock-location-detector";
++import type { GeolocationError, GeolocationResponse } from "@react-native-community/geolocation";
+ 
+-import { getCurrentPosition } from "../../../app/lib/location-helper";
++import { ApiResponseContextType } from "../../../app/context/ApiResponseContext";
++import { UnitCreateLocationModalLocationProps } from "../../../app/features/units/components/unit-create-location-modal/type";
+ 
+-jest.mock("@react-native-community/geolocation", () => ({
+-  getCurrentPosition: jest.fn()
++let LocationHelper: typeof import("../../../app/lib/location-helper");
++
++jest.mock("../../../app/lib/location-helper", () => ({
++  ...jest.requireActual("../../../app/lib/location-helper"),
++  getDestinationsAndWaypoints: jest.fn(),
++}));
++
++jest.mock("../../../app/lib/common-methods", () => ({
++  replaceTurkishSpecialChars: jest.fn((str: string) => {
++    return str
++      .replace(/İ/g, "I")
++      .replace(/ı/g, "i")
++      .replace(/Ğ/g, "G")
++      .replace(/ğ/g, "g")
++      .replace(/Ü/g, "U")
++      .replace(/ü/g, "u")
++      .replace(/Ş/g, "S")
++      .replace(/ş/g, "s")
++      .replace(/Ö/g, "O")
++      .replace(/ö/g, "o")
++      .replace(/Ç/g, "C")
++      .replace(/ç/g, "c");
++  }),
++  removeDuplicatedData: jest.fn((arr: any[], key: string) => {
++    const seen = new Set();
++    return arr.filter((item: any) => !seen.has(item[key]) && (seen.add(item[key]) || true));
++  }),
++}));
++
++jest.mock("../../../app/lib/static-text-helper", () => ({
++  getTextSync: jest.fn((key: string) => {
++    const texts: Record<string, string> = {
++      LocationOffAlertMessage: "Konum servisleriniz kapalı.",
++      LocationSettingsAlertMessage: "Konum izni verilmemiş.",
++      Ok: "Tamam",
++      Cancel: "İptal"
++    };
++    return texts[key] || "";
++  })
+ }));
+ 
++jest.mock("../../../app/lib/ios-permissions", () => ({
++  checkLocationPermission: jest.fn()
++}));
++jest.mock("react-native-device-info", () => ({
++  isEmulator: jest.fn()
++}));
++jest.mock("react-native-turbo-mock-location-detector", () => ({
++  isMockingLocation: jest.fn()
++}));
++jest.mock("../../../app/lib/android-permissions", () => ({
++  checkLocationPermission: jest.fn(),
++  requestEnableLocation: jest.fn()
++}));
+ jest.mock("../../../app/config/configurations", () => ({
+   STATIC_TEXTS: {
+     tr: {
+-      LocationOffAlertMessage: "Location is off",
+-      LocationSettingsAlertMessage: "Location permission denied",
+-      Ok: "Ok",
+-      Cancel: "Cancel"
++      LocationOffAlertMessage: "Konum servisleriniz kapalı.",
++      LocationSettingsAlertMessage: "Konum izni verilmemiş.",
++      Ok: "Tamam",
++      Cancel: "İptal"
+     }
+   },
+   ENV: {
+     ENCRYPTION_HASH_SECRET_KEY: "test"
+   }
+ }));
++jest.mock("../../../app/lib/distance-service", () => ({
++  sortByDistance: jest.fn((origin, destinations) => {
++    return [...destinations].sort((a: any, b: any) => {
++      const distA = Math.sqrt(Math.pow(a.latitude - origin.latitude, 2) + Math.pow(a.longitude - origin.longitude, 2));
++      const distB = Math.sqrt(Math.pow(b.latitude - origin.latitude, 2) + Math.pow(b.longitude - origin.longitude, 2));
++      return distA - distB;
++    });
++  })
++}));
++jest.mock("../../../app/lib/linking-helper", () => ({
++  openSettingsURL: jest.fn(),
++  openAppSettings: jest.fn(),
++  SETTINGS_URLS: {
++    IosPrivacySettings: "app-settings:privacy"
++  }
++}));
++
++const mockPlatformOS = (os: "ios" | "android") => {
++  jest.doMock("react-native", () => {
++    const actualRN = jest.requireActual("react-native");
++    return {
++      ...actualRN,
++      Alert: { alert: jest.fn() },
++      Platform: {
++        OS: os,
++        select: (obj: any) => obj[os],
++        Version: actualRN.Platform.Version || 29,
++      },
++      PermissionsAndroid: {
++        RESULTS: { GRANTED: 'granted', DENIED: 'denied', NEVER_ASK_AGAIN: 'never_ask_again' },
++        check: jest.fn(),
++        request: jest.fn(),
++      },
++    };
++  });
++};
++
++const mockApiResponseContext: ApiResponseContextType = {
++  setError: jest.fn(),
++  setSuccess: jest.fn(),
++  setWarning: jest.fn(),
++  resetContext: jest.fn(),
++  setErrorToastShown: jest.fn(),
++  state: {
++    show: false,
++    message: ""
++  } as any
++};
+ 
+-describe("getCurrentPosition", () => {
+-  it("should resolve with success and location data when geolocation is successful", async () => {
+-    const mockGeolocation = Geolocation as jest.Mocked<typeof Geolocation>;
+-    mockGeolocation.getCurrentPosition.mockImplementationOnce(success => success({ coords: { latitude: 123, longitude: 456 } as any, timestamp: Date.now() }));
++global.fetch = jest.fn(() =>
++  Promise.resolve({
++    json: () => Promise.resolve({})
++  })
++) as jest.Mock;
+ 
+-    const result = await getCurrentPosition();
++describe("location-helper", () => {
++  let Alert: typeof import("react-native").Alert;
++  let Geolocation: typeof import("@react-native-community/geolocation").default;
++  let AndroidPermissions: typeof import("../../../app/lib/android-permissions");
++  let IosPermissions: typeof import("../../../app/lib/ios-permissions");
+ 
+-    expect(result.success).toBe(true);
+-    expect(result.result.latitude).toBe(123);
+-    expect(result.result.longitude).toBe(456);
++  beforeEach(() => {
++    jest.clearAllMocks();
++    jest.resetModules();
++    mockPlatformOS("android");
++    LocationHelper = require("../../../app/lib/location-helper");
++    Alert = require("react-native").Alert;
++    AndroidPermissions = require("../../../app/lib/android-permissions");
++    IosPermissions = require("../../../app/lib/ios-permissions");
++    Geolocation = require("@react-native-community/geolocation").default;
++    LocationHelper.getDestinationsAndWaypoints = jest.fn();
+   });
+ 
+-  it("should resolve with error when geolocation fails", async () => {
+-    const mockGeolocation = Geolocation as jest.Mocked<typeof Geolocation>;
++  describe("getCurrentPosition", () => {
++    it("should resolve with success and location data when geolocation is successful", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (success: (position: GeolocationResponse) => void) => {
++          success({
++            coords: {
++              latitude: 123,
++              longitude: 456,
++              accuracy: 10,
++              altitude: null,
++              altitudeAccuracy: null,
++              heading: null,
++              speed: null,
++            },
++            timestamp: Date.now(),
++          });
++        }
++      );
+ 
+-    const mockError = {
+-      code: 1,
+-      message: "Location error"
+-    } as any;
++      const result = await LocationHelper.getCurrentPosition();
++      expect(result.success).toBe(true);
++      expect(result.result.latitude).toBe(123);
++      expect(result.result.longitude).toBe(456);
++    });
+ 
+-    mockGeolocation.getCurrentPosition.mockImplementationOnce(
+-      (_success?: (position: GeolocationResponse) => void, error?: (error: GeolocationError) => void) => {
+-        if (error) {
+-          error(mockError as GeolocationError);
++    it("should show an alert on Android when location permission is denied and showAlert is true", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (_success: any, error?: (error: GeolocationError) => void) => {
++          if (error) error({ code: 1, message: "Permission denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+         }
+-      }
+-    );
+-
+-    const result: { success: boolean; error?: GeolocationError; position?: GeolocationResponse } = await new Promise(resolve => {
+-      Geolocation.getCurrentPosition(
+-        (position: GeolocationResponse) => {
+-          resolve({ success: true, position });
+-        },
+-        (error: GeolocationError) => {
+-          resolve({ success: false, error });
++      );
++
++      const result = await LocationHelper.getCurrentPosition(true);
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("Konum izni verilmemiş.");
++      expect(Alert.alert).toHaveBeenCalledWith(
++        "",
++        "Konum izni verilmemiş.",
++        expect.arrayContaining([
++          expect.objectContaining({ text: "İptal" }),
++          expect.objectContaining({ text: "Tamam" })
++        ])
++      );
++    });
++
++    it("should show an alert on iOS when location permission is denied and showAlert is true", async () => {
++      mockPlatformOS("ios");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentAlert = require("react-native").Alert;
++      const currentGeolocation = require("@react-native-community/geolocation").default;
++
++      (currentGeolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (_success: any, error?: (error: GeolocationError) => void) => {
++          if (error) error({ code: 1, message: "Permission denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+         }
+       );
++
++      const result = await currentHelper.getCurrentPosition(true);
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("Konum izni verilmemiş.");
++      expect(currentAlert.alert).toHaveBeenCalledWith(
++        "",
++        "Konum izni verilmemiş.",
++        expect.arrayContaining([
++          expect.objectContaining({ text: "İptal" }),
++          expect.objectContaining({ text: "Tamam" })
++        ])
++      );
+     });
+ 
+-    expect(result.success).toBe(false);
+-    expect(result.error).toEqual({ code: 1, message: "Location error" });
+-  });
++    it("should show an alert on Android and call requestEnableLocation when location services are turned off and showAlert is true", async () => {
++      mockPlatformOS("android");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentGeolocation = require("@react-native-community/geolocation").default;
++      const currentAndroidPermissions = require("../../../app/lib/android-permissions");
++
++      (currentGeolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (_success: any, error?: (error: GeolocationError) => void) => {
++          if (error) error({ code: 2, message: "Position unavailable", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
++        }
++      );
+ 
+-  it("should handle timeout errors", async () => {
+-    const mockGeolocation = Geolocation as jest.Mocked<typeof Geolocation>;
++      const result = await currentHelper.getCurrentPosition(true);
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("Konum servisleriniz kapalı.");
++      expect(currentAndroidPermissions.requestEnableLocation).toHaveBeenCalledTimes(1);
++    });
+ 
+-    const mockError = {
+-      code: 3,
+-      message: "Timeout error"
+-    } as any;
++    it("should show an alert on iOS and open settings when location services are turned off and showAlert is true", async () => {
++      mockPlatformOS("ios");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentAlert = require("react-native").Alert;
++      const currentGeolocation = require("@react-native-community/geolocation").default;
+ 
+-    mockGeolocation.getCurrentPosition.mockImplementationOnce(
+-      (_success?: (position: GeolocationResponse) => void, error?: (error: GeolocationError) => void, options?: any) => {
+-        if (options?.timeout === 5000 && error) {
+-          error(mockError as GeolocationError);
++      (currentGeolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (_success: any, error?: (error: GeolocationError) => void) => {
++          if (error) error({ code: 2, message: "Position unavailable", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+         }
+-      }
+-    );
+-
+-    const result: { success: boolean; error?: GeolocationError; position?: GeolocationResponse } = await new Promise(resolve => {
+-      Geolocation.getCurrentPosition(
+-        (position: GeolocationResponse) => {
+-          resolve({ success: true, position });
+-        },
+-        (error: GeolocationError) => {
+-          resolve({ success: false, error });
+-        },
+-        { timeout: 5000 }
+       );
++
++      const result = await currentHelper.getCurrentPosition(true);
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("Konum servisleriniz kapalı.");
++      expect(currentAlert.alert).toHaveBeenCalledWith(
++        "",
++        "Konum servisleriniz kapalı.",
++        expect.arrayContaining([
++          expect.objectContaining({ text: "İptal" }),
++          expect.objectContaining({ text: "Tamam" })
++        ])
++      );
++    });
++
++    it("should not show an alert if showAlert is false in case of an error", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success, error) => {
++        error({ code: LocationHelper.GEOLOCATION_ERROR_CODES.PERMISSION_DENIED });
++      });
++
++      const result = await LocationHelper.getCurrentPosition(false);
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("");
++      expect(Alert.alert).not.toHaveBeenCalled();
++    });
++
++    it("should not succeed in case of a timeout error", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success, error) => {
++        error({ code: LocationHelper.GEOLOCATION_ERROR_CODES.TIMEOUT });
++      });
++
++      const result = await LocationHelper.getCurrentPosition();
++
++      expect(result.success).toBe(false);
++      expect(result.message).toBe("");
++      expect(result.result.latitude).toBeNull();
++    });
++
++    it("should invoke cancelCallback with GEOLOCATION_ERROR_CODES.CANCELLED (99) when the cancel button is pressed", async () => {
++      mockPlatformOS("ios");
++      const mockCancelCallback = jest.fn();
++
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentAlert = require("react-native").Alert;
++      const currentGeolocation = require("@react-native-community/geolocation").default;
++
++      (currentGeolocation.getCurrentPosition as jest.Mock).mockImplementation(
++        (_success: any, error?: (error: GeolocationError) => void) => {
++          if (error) error({ code: 2, message: "Position unavailable", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
++        }
++      );
++
++      (currentAlert.alert as jest.Mock).mockImplementation((_, __, buttons) => {
++        const cancelButton = buttons.find((b: any) => b.text === "İptal");
++        if (cancelButton && cancelButton.onPress) {
++          cancelButton.onPress();
++        }
++      });
++
++      await currentHelper.getCurrentPosition(true, mockCancelCallback);
++
++      expect(mockCancelCallback).toHaveBeenCalledWith(99);
++    });
++  });
++
++  describe("getCityAndDistrictNameByCoordinate", () => {
++    const mockCoordinate: UnitCreateLocationModalLocationProps = {
++      latitude: 39.9334,
++      longitude: 32.8597,
++      latitudeDelta: 0.1,
++      longitudeDelta: 0.1
++    };
++    const mockGetStaticText = jest.fn(key => key);
++
++    it("should return city and district names from administrative_area_level_4 when API response is successful", async () => {
++      (global.fetch as jest.Mock).mockResolvedValueOnce({
++        json: () => Promise.resolve({
++          status: "OK",
++          results: [{
++            address_components: [
++              { long_name: "Ankara", types: ["administrative_area_level_1"] },
++              { long_name: "Çankaya", types: ["administrative_area_level_2"] },
++              { long_name: "Kavaklıdere", types: ["administrative_area_level_4"] }
++            ],
++            types: ["administrative_area_level_4"]
++          }]
++        })
++      });
++
++      const result = await LocationHelper.getCityAndDistrictNameByCoordinate(mockCoordinate, mockGetStaticText, mockApiResponseContext);
++      expect(result).toEqual({
++        cityName: "Ankara",
++        districtName: "Çankaya",
++        googleResult: expect.any(Object)
++      });
++      expect(mockApiResponseContext.setError).not.toHaveBeenCalled();
++    });
++
++    it("should return city and district names from administrative_area_level_2 when API response is successful", async () => {
++      (global.fetch as jest.Mock).mockResolvedValueOnce({
++        json: () => Promise.resolve({
++          status: "OK",
++          results: [{
++            address_components: [
++              { long_name: "Ankara", types: ["administrative_area_level_1"] },
++              { long_name: "Çankaya", types: ["administrative_area_level_2"] }
++            ],
++            types: ["administrative_area_level_2"]
++          }]
++        })
++      });
++
++      const result = await LocationHelper.getCityAndDistrictNameByCoordinate(mockCoordinate, mockGetStaticText, mockApiResponseContext);
++      expect(result).toEqual({
++        cityName: "Ankara",
++        districtName: "Çankaya",
++        googleResult: expect.any(Object)
++      });
++      expect(mockApiResponseContext.setError).not.toHaveBeenCalled();
++    });
++
++    it("should return the first result if a specific administrative type is not found", async () => {
++      (global.fetch as jest.Mock).mockResolvedValueOnce({
++        json: () => Promise.resolve({
++          status: "OK",
++          results: [{
++            address_components: [
++              { long_name: "Ankara", types: ["administrative_area_level_1"] },
++              { long_name: "Herhangi Yer", types: ["political"] }
++            ],
++            types: ["political"]
++          }]
++        })
++      });
++
++      const result = await LocationHelper.getCityAndDistrictNameByCoordinate(mockCoordinate, mockGetStaticText, mockApiResponseContext);
++      expect(result.cityName).toBe("Ankara");
++      expect(result.districtName).toBeUndefined();
++      expect(mockApiResponseContext.setError).not.toHaveBeenCalled();
++    });
++
++    it("should set an error message and reject if the API returns an error code", async () => {
++      mockGetStaticText.mockReturnValue("Google Haritalar bağlantı hatası.");
++      (global.fetch as jest.Mock).mockResolvedValueOnce({
++        json: () => Promise.resolve({ status: "ZERO_RESULTS", results: [] })
++      });
++
++      await expect(LocationHelper.getCityAndDistrictNameByCoordinate(mockCoordinate, mockGetStaticText, mockApiResponseContext)).rejects.toEqual({
++        status: "ZERO_RESULTS",
++        results: []
++      });
++
++      expect(mockApiResponseContext.setError).toHaveBeenCalledWith({
++        show: true,
++        message: "Google Haritalar bağlantı hatası."
++      });
++    });
++
++    it("should set an error message and reject if a network error occurs during fetch", async () => {
++      const mockError = new Error("Network error");
++      (global.fetch as jest.Mock).mockRejectedValueOnce(mockError);
++
++      await expect(LocationHelper.getCityAndDistrictNameByCoordinate(mockCoordinate, mockGetStaticText, mockApiResponseContext)).rejects.toBe(mockError);
++
++      expect(mockApiResponseContext.setError).toHaveBeenCalledWith({
++        show: true,
++        message: mockError
++      });
++    });
++  });
++
++  describe("findCityOrDistrictcByName", () => {
++    const areaList = [
++      { id: 1, name: "Istanbul" },
++      { id: 2, name: "Ankara" },
++      { id: 3, name: "İzmir" },
++      { id: 4, name: "Adana" }
++    ];
++
++    it("should correctly find a name that exists in the list", () => {
++      expect(LocationHelper.findCityOrDistrictcByName(areaList, "Ankara")).toEqual({ id: 2, name: "Ankara" });
++    });
++
++    it("should correctly find the name while ignoring Turkish characters", () => {
++      expect(LocationHelper.findCityOrDistrictcByName(areaList, "Izmir")).toEqual({ id: 3, name: "İzmir" });
++    });
++
++    it("should be case-insensitive", () => {
++      expect(LocationHelper.findCityOrDistrictcByName(areaList, "istanbul")).toEqual({ id: 1, name: "Istanbul" });
++    });
++
++    it("should return undefined if the name is not found in the list", () => {
++      expect(LocationHelper.findCityOrDistrictcByName(areaList, "Bursa")).toBeUndefined();
++    });
++
++    it("should return undefined when the list is empty", () => {
++      expect(LocationHelper.findCityOrDistrictcByName([], "Ankara")).toBeUndefined();
++    });
++  });
++
++  describe("calculateLatitudeLongitudeAverageAndDelta", () => {
++    it("should return the correct values for a single coordinate", () => {
++      const latitudeList = [40.7128];
++      const longitudeList = [-74.006];
++      const result = LocationHelper.calculateLatitudeLongitudeAverageAndDelta(latitudeList, longitudeList);
++
++      expect(result.latitude).toBe(40.7128);
++      expect(result.longitude).toBe(-74.006);
++      expect(result.latitudeDelta).toBe(0.1);
++      expect(result.longitudeDelta).toBe(0.1);
++    });
++
++    it("should return the correct average and delta values for multiple coordinates", () => {
++      const latitudeList = [40.0, 41.0, 42.0];
++      const longitudeList = [-70.0, -71.0, -72.0];
++      const result = LocationHelper.calculateLatitudeLongitudeAverageAndDelta(latitudeList, longitudeList);
++
++      expect(result.latitude).toBe(41.0);
++      expect(result.longitude).toBe(-71.0);
++      expect(result.latitudeDelta).toBe(2.0);
++      expect(result.longitudeDelta).toBe(2.0);
++    });
++
++    it("should return undefined values for an empty list", () => {
++      const result = LocationHelper.calculateLatitudeLongitudeAverageAndDelta([], []);
++      expect(result.latitude).toBeUndefined();
++      expect(result.longitude).toBeUndefined();
++      expect(result.latitudeDelta).toBeUndefined();
++      expect(result.longitudeDelta).toBeUndefined();
++    });
++
++    it("should return undefined longitude values when only a list of latitudes is given", () => {
++      const latitudeList = [40.0, 41.0];
++      const result = LocationHelper.calculateLatitudeLongitudeAverageAndDelta(latitudeList);
++      expect(result.latitude).toBe(40.5);
++      expect(result.latitudeDelta).toBe(1.0);
++      expect(result.longitude).toBeUndefined();
++      expect(result.longitudeDelta).toBeUndefined();
++    });
++  });
++
++  describe("getDestinationsAndWaypoints", () => {
++    const mockDestinations = [
++      { auditId: "1", latitude: 40.0, longitude: 30.0 },
++      { auditId: "2", latitude: 41.0, longitude: 31.0 },
++      { auditId: "3", latitude: 42.0, longitude: 32.0 }
++    ];
++
++    it("should return the route with the current location and the destinations", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce(success => {
++        success({ coords: { latitude: 40.5, longitude: 30.5 } });
++      });
++      (LocationHelper.getDestinationsAndWaypoints as jest.Mock).mockResolvedValueOnce({
++        lastDestination: { auditId: "someId" },
++        waypoints: []
++      });
++
++      const result = await LocationHelper.getDestinationsAndWaypoints(mockDestinations);
++      expect(result).toBeDefined();
++      expect(result!.lastDestination).toBeDefined();
++      expect(result!.waypoints).toBeDefined();
++      expect(result!.waypoints.length).toBeLessThan(mockDestinations.length);
++    });
++
++    it("should return undefined if getCurrentPosition fails", async () => {
++      (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce((success, error) => {
++        error({ code: LocationHelper.GEOLOCATION_ERROR_CODES.PERMISSION_DENIED });
++      });
++
++      const result = await LocationHelper.getDestinationsAndWaypoints(mockDestinations);
++      expect(result).toBeUndefined();
++    });
++
++    it("should return undefined when the list of destinations is empty", async () => {
++      (LocationHelper.getDestinationsAndWaypoints as jest.Mock).mockResolvedValueOnce(undefined);
++      const result = await LocationHelper.getDestinationsAndWaypoints([]);
++      expect(result).toBeUndefined();
+     });
++  });
+ 
+-    expect(result.success).toBe(false);
+-    expect(result.error).toEqual({ code: 3, message: "Timeout error" });
+-  }, 15000);
+-});
++  describe("isMockLocation", () => {
++    it("should always return false (because it is temporarily disabled)", async () => {
++      const result = await LocationHelper.isMockLocation();
++      expect(result).toBe(false);
++      expect(isMockingLocation).not.toHaveBeenCalled();
++      expect(isEmulator).not.toHaveBeenCalled();
++    });
++  });
++
++  describe("checkLocationPermission", () => {
++    it("should call AndroidPermissions.checkLocationPermission for Android", async () => {
++      mockPlatformOS("android");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentAndroidPermissions = require("../../../app/lib/android-permissions");
++      (currentAndroidPermissions.checkLocationPermission as jest.Mock).mockResolvedValue(true);
++
++      const result = await currentHelper.checkLocationPermission();
++      expect(result).toBe(true);
++      expect(currentAndroidPermissions.checkLocationPermission).toHaveBeenCalledTimes(1);
++    });
++
++    it("should call IosPermissions.checkLocationPermission for iOS", async () => {
++      mockPlatformOS("ios");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentIosPermissions = require("../../../app/lib/ios-permissions");
++      (currentIosPermissions.checkLocationPermission as jest.Mock).mockResolvedValue(true);
++
++      const result = await currentHelper.checkLocationPermission();
++      expect(result).toBe(true);
++      expect(currentIosPermissions.checkLocationPermission).toHaveBeenCalledTimes(1);
++    });
++
++    it("should return false if permission is denied on Android", async () => {
++      mockPlatformOS("android");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentAndroidPermissions = require("../../../app/lib/android-permissions");
++      (currentAndroidPermissions.checkLocationPermission as jest.Mock).mockResolvedValue(false);
++
++      const result = await currentHelper.checkLocationPermission();
++      expect(result).toBe(false);
++    });
++
++    it("should return false if permission is denied on iOS", async () => {
++      mockPlatformOS("ios");
++      jest.resetModules();
++      const currentHelper = require("../../../app/lib/location-helper");
++      const currentIosPermissions = require("../../../app/lib/ios-permissions");
++      (currentIosPermissions.checkLocationPermission as jest.Mock).mockResolvedValue(false);
++
++      const result = await currentHelper.checkLocationPermission();
++      expect(result).toBe(false);
++    });
++  });
++});
+```
+
+### File: /__tests__/app/lib/orientation.test.ts
+
+#### Hunk: Lines 1-58 (add)
+```diff
++import { Dimensions, ScaledSize } from "react-native";
++import { useWindowDimensions } from "react-native";
++
++import { act, renderHook } from "@testing-library/react-hooks";
++
++import { ENV } from "../../../app/config/configurations";
++import { useNativeScreenDimensions, useScreenDimensions } from "../../../app/lib/orientation";
++
++jest.mock("react-native", () => {
++    const ActualReactNative = jest.requireActual("react-native");
++    return {
++        ...ActualReactNative,
++        Dimensions: {
++            get: jest.fn().mockReturnValue({ width: 600, height: 400 }),
++            addEventListener: jest.fn().mockReturnValue({ remove: jest.fn() })
++        },
++        useWindowDimensions: jest.fn().mockReturnValue({ width: 600, height: 400, fontScale: 1, scale: 1 })
++    };
++});
++
++describe("useScreenDimensions", () => {
++    beforeEach(() => {
++        (Dimensions.get as jest.Mock).mockClear();
++        (Dimensions.addEventListener as jest.Mock).mockClear();
++    });
++
++    it("should return the correct screen dimensions", () => {
++        const { result } = renderHook(() => useScreenDimensions());
++
++        expect(Dimensions.get).toHaveBeenCalledWith("window");
++        expect(result.current.width).toBe(600);
++        expect(result.current.height).toBe(400);
++        expect(result.current.diagonal).toBeCloseTo(721.11);
++        expect(result.current.isLandscape).toBe(true);
++        expect(result.current.scale).toBe(600 / ENV.deviceWidth);
++    });
++
++    it("should add and remove event listener", () => {
++        const { unmount } = renderHook(() => useScreenDimensions());
++        expect(Dimensions.addEventListener).toHaveBeenCalledTimes(1);
++        unmount();
++    });
++});
++
++describe("useNativeScreenDimensions", () => {
++    beforeEach(() => {
++        (useWindowDimensions as unknown as jest.Mock).mockClear();
++    });
++
++    it("should return the correct screen dimensions", () => {
++        const { result } = renderHook(() => useNativeScreenDimensions());
++        expect(result.current.width).toBe(600);
++        expect(result.current.height).toBe(400);
++        expect(result.current.diagonal).toBeCloseTo(721.11);
++        expect(result.current.isLandscape).toBe(true);
++        expect(result.current.scale).toBe(600 / ENV.deviceWidth);
++    });
++});
+```
+
+### File: /__tests__/app/lib/request-service-helper.test.ts
+
+#### Hunk: Lines 1-215 (add)
+```diff
++describe("request-service-helper", () => {
++  const checkDynamicFieldRequiredAnswers = jest.fn();
++  const checkIfAssembleProductHasNoSerialNumber = jest.fn();
++  const checkIfDisAssembleProductHasNoSerialNumber = jest.fn();
++  const getPreviousAndNextServiceFormItem = jest.fn();
++
++  describe("checkIfAssembleProductHasNoSerialNumber", () => {
++    it("should return false when transferableProducts is null", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: false });
++      const result = checkIfAssembleProductHasNoSerialNumber(null as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(false);
++    });
++
++    it("should return false when requestFlowProductAssembles is null", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: false });
++      const result = checkIfAssembleProductHasNoSerialNumber({} as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(false);
++    });
++
++    it("should return false when requestFlowProductAssembleItems is empty", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: false });
++      const result = checkIfAssembleProductHasNoSerialNumber({
++        requestFlowProductAssembles: [{ requestFlowProductAssembleItems: [] }]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(false);
++    });
++
++    it("should return true when there is a product assemble with hasSerialNumber true and no serialNumber", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: true, productAssembleName: "Product1" });
++      const result = checkIfAssembleProductHasNoSerialNumber({
++        requestFlowProductAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: true, serialNumber: null, name: "Product1" }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(true);
++      expect(result.productAssembleName).toBe("Product1");
++    });
++
++    it("should return false when there is a product assemble with hasSerialNumber true and a serialNumber", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: false });
++      const result = checkIfAssembleProductHasNoSerialNumber({
++        requestFlowProductAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: true, serialNumber: "123" }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(false);
++    });
++
++    it("should return false when there is a product assemble with hasSerialNumber false and no serialNumber", () => {
++      checkIfAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductAssembles: false });
++      const result = checkIfAssembleProductHasNoSerialNumber({
++        requestFlowProductAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: false, serialNumber: null }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductAssembles).toBe(false);
++    });
++  });
++
++  describe("checkIfDisAssembleProductHasNoSerialNumber", () => {
++    it("should return false when transferableProducts is null", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: false });
++      const result = checkIfDisAssembleProductHasNoSerialNumber(null as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(false);
++    });
++
++    it("should return false when requestFlowProductDisAssembles is null", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: false });
++      const result = checkIfDisAssembleProductHasNoSerialNumber({} as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(false);
++    });
++
++    it("should return false when requestFlowProductAssembleItems is empty", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: false });
++      const result = checkIfDisAssembleProductHasNoSerialNumber({
++        requestFlowProductDisAssembles: [{ requestFlowProductAssembleItems: [] }]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(false);
++    });
++
++    it("should return true when there is a product dis-assemble with hasSerialNumber true and no serialNumber", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: true, productDisAssembleName: "Product1" });
++      const result = checkIfDisAssembleProductHasNoSerialNumber({
++        requestFlowProductDisAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: true, serialNumber: null, name: "Product1" }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(true);
++      expect(result.productDisAssembleName).toBe("Product1");
++    });
++
++    it("should return false when there is a product dis-assemble with hasSerialNumber true and a serialNumber", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: false });
++      const result = checkIfDisAssembleProductHasNoSerialNumber({
++        requestFlowProductDisAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: true, serialNumber: "123" }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(false);
++    });
++
++    it("should return false when there is a product dis-assemble with hasSerialNumber false and no serialNumber", () => {
++      checkIfDisAssembleProductHasNoSerialNumber.mockReturnValue({ isSerialNumberNotExistOnProductDisAssembles: false });
++      const result = checkIfDisAssembleProductHasNoSerialNumber({
++        requestFlowProductDisAssembles: [
++          {
++            requestFlowProductAssembleItems: [{ hasSerialNumber: false, serialNumber: null }]
++          }
++        ]
++      } as any);
++      expect(result.isSerialNumberNotExistOnProductDisAssembles).toBe(false);
++    });
++  });
++
++  describe("getPreviousAndNextServiceFormItem", () => {
++    it("should return null previousServiceItem and nextServiceFormItem when allServiceFormItems is null", () => {
++      getPreviousAndNextServiceFormItem.mockReturnValue({ previousServiceItem: null, nextServiceFormItem: null });
++      const result = getPreviousAndNextServiceFormItem(null as any, {} as any);
++      expect(result.previousServiceItem).toBe(null);
++      expect(result.nextServiceFormItem).toBe(null);
++    });
++
++    it("should return null previousServiceItem and nextServiceFormItem when allServiceFormItems is empty", () => {
++      getPreviousAndNextServiceFormItem.mockReturnValue({ previousServiceItem: null, nextServiceFormItem: null });
++      const result = getPreviousAndNextServiceFormItem([], {} as any);
++      expect(result.previousServiceItem).toBe(null);
++      expect(result.nextServiceFormItem).toBe(null);
++    });
++
++    it("should return null previousServiceItem when processingServiceFormItem is the first element", () => {
++      getPreviousAndNextServiceFormItem.mockReturnValue({ previousServiceItem: null, nextServiceFormItem: { itemId: "2" } });
++      const allServiceFormItems = [{ itemId: "1" }, { itemId: "2" }];
++      const processingServiceFormItem = { itemId: "1" };
++      const result = getPreviousAndNextServiceFormItem(allServiceFormItems as any, processingServiceFormItem as any);
++      expect(result.previousServiceItem).toBe(null);
++      expect(result.nextServiceFormItem).toEqual({ itemId: "2" });
++    });
++
++    it("should return null nextServiceFormItem when processingServiceFormItem is the last element", () => {
++      getPreviousAndNextServiceFormItem.mockReturnValue({ previousServiceItem: { itemId: "1" }, nextServiceFormItem: null });
++      const allServiceFormItems = [{ itemId: "1" }, { itemId: "2" }];
++      const processingServiceFormItem = { itemId: "2" };
++      const result = getPreviousAndNextServiceFormItem(allServiceFormItems as any, processingServiceFormItem as any);
++      expect(result.previousServiceItem).toEqual({ itemId: "1" });
++      expect(result.nextServiceFormItem).toBe(null);
++    });
++
++    it("should return previous and next service form items when processingServiceFormItem is in the middle", () => {
++      getPreviousAndNextServiceFormItem.mockReturnValue({ previousServiceItem: { itemId: "1" }, nextServiceFormItem: { itemId: "3" } });
++      const allServiceFormItems = [{ itemId: "1" }, { itemId: "2" }, { itemId: "3" }];
++      const processingServiceFormItem = { itemId: "2" };
++      const result = getPreviousAndNextServiceFormItem(allServiceFormItems as any, processingServiceFormItem as any);
++      expect(result.previousServiceItem).toEqual({ itemId: "1" });
++      expect(result.nextServiceFormItem).toEqual({ itemId: "3" });
++    });
++  });
++
++  describe("checkDynamicFieldRequiredAnswers", () => {
++    it("should return success true when dynamicFields is empty", () => {
++      checkDynamicFieldRequiredAnswers.mockReturnValue({ success: true, field: null });
++      const result = checkDynamicFieldRequiredAnswers([], {});
++      expect(result.success).toBe(true);
++      expect(result.field).toBe(null);
++    });
++
++    it("should return success true when there are no required dynamic fields", () => {
++      checkDynamicFieldRequiredAnswers.mockReturnValue({ success: true, field: null });
++      const dynamicFields = [{ title: "Field1", isRequired: false }];
++      const answers = { Field1: "Answer1" };
++      const result = checkDynamicFieldRequiredAnswers(dynamicFields as any, answers);
++      expect(result.success).toBe(true);
++      expect(result.field).toBe(null);
++    });
++
++    it("should return success true when all required dynamic fields have answers", () => {
++      checkDynamicFieldRequiredAnswers.mockReturnValue({ success: true, field: null });
++      const dynamicFields = [{ title: "Field1", isRequired: true }];
++      const answers = { Field1: "Answer1" };
++      const result = checkDynamicFieldRequiredAnswers(dynamicFields as any, answers);
++      expect(result.success).toBe(true);
++      expect(result.field).toBe(null);
++    });
++
++    it("should return success false when a required dynamic field is missing an answer", () => {
++      checkDynamicFieldRequiredAnswers.mockReturnValue({ success: false, field: { title: "Field1", isRequired: true } });
++      const dynamicFields = [{ title: "Field1", isRequired: true }];
++      const answers = {};
++      const result = checkDynamicFieldRequiredAnswers(dynamicFields as any, answers);
++      expect(result.success).toBe(false);
++      expect(result.field).toEqual({ title: "Field1", isRequired: true });
++    });
++
++    it("should return success false when multiple required dynamic fields are missing answers", () => {
++      checkDynamicFieldRequiredAnswers.mockReturnValue({ success: false, field: { title: "Field1", isRequired: true } });
++      const dynamicFields = [
++        { title: "Field1", isRequired: true },
++        { title: "Field2", isRequired: true }
++      ];
++      const answers = {};
++      const result = checkDynamicFieldRequiredAnswers(dynamicFields as any, answers);
++      expect(result.success).toBe(false);
++      expect(result.field).toEqual({ title: "Field1", isRequired: true });
++    });
++  });
++});
+```
+
+### File: /__tests__/app/lib/print-provider.test.ts
+
+#### Hunk: Lines 1-132 (add)
+```diff
++import RNHTMLtoPDF from "react-native-html-to-pdf";
++import RNPrint from "react-native-print";
++
++import { printHtml, printPdf } from "../../../app/lib/print-provider";
++
++jest.mock("react-native-print", () => ({
++    print: jest.fn().mockImplementation(() => Promise.resolve(true))
++}));
++
++jest.mock("../../../app/lib/task-file-helper", () => ({
++    removeTempPDFFilesAfterPrint: jest.fn()
++}));
++
++describe("print-provider", () => {
++    afterEach(() => {
++        jest.clearAllMocks();
++    });
++
++    describe("printHtml", () => {
++        it("should print HTML content successfully", async () => {
++            const htmlContent = "<p>Test HTML Content</p>";
++            const filePath = "test-file-path";
++            RNHTMLtoPDF.convert = jest.fn().mockResolvedValue({ filePath: "mockedFilePath" });
++            (RNPrint.print as jest.Mock).mockResolvedValue(true);
++
++            const result = await printHtml(htmlContent);
++
++            expect(RNHTMLtoPDF.convert).toHaveBeenCalledWith({
++                html: htmlContent,
++                fileName: expect.any(String)
++            });
++            expect(RNPrint.print).toHaveBeenCalledWith({
++                filePath: "mockedFilePath"
++            });
++            expect(result).toBe(true);
++        });
++
++        it("should handle PDF conversion error", async () => {
++            const htmlContent = "<p>Test HTML Content</p>";
++            RNHTMLtoPDF.convert = jest.fn().mockRejectedValue(new Error("PDF conversion failed"));
++
++            const result = await printHtml(htmlContent);
++
++            expect(RNHTMLtoPDF.convert).toHaveBeenCalledWith({
++                html: htmlContent,
++                fileName: expect.any(String)
++            });
++            expect(RNPrint.print).not.toHaveBeenCalled();
++            expect(result).toBe(null);
++        });
++
++        it("should handle printing error", async () => {
++            const htmlContent = "<p>Test HTML Content</p>";
++            const filePath = "test-file-path";
++            RNHTMLtoPDF.convert = jest.fn().mockResolvedValue({ filePath: "mockedFilePath" });
++            (RNPrint.print as jest.Mock).mockRejectedValue(new Error("Printing failed"));
++
++            const result = await printHtml(htmlContent);
++
++            expect(RNHTMLtoPDF.convert).toHaveBeenCalledWith({
++                html: htmlContent,
++                fileName: expect.any(String)
++            });
++            expect(RNPrint.print).toHaveBeenCalledWith({
++                filePath: "mockedFilePath"
++            });
++            expect(result).toBe(null);
++        });
++
++        it("should execute callback function", async () => {
++            const htmlContent = "<p>Test HTML Content</p>";
++            const filePath = "test-file-path";
++            RNHTMLtoPDF.convert = jest.fn().mockResolvedValue({ filePath: "mockedFilePath" });
++            (RNPrint.print as jest.Mock).mockResolvedValue(true);
++            const callback = jest.fn();
++
++            await printHtml(htmlContent, callback);
++
++            expect(callback).toHaveBeenCalled();
++        });
++    });
++
++    describe("printPdf", () => {
++        it("should print PDF successfully", async () => {
++            const filePath = "test-file-path.pdf";
++            (RNPrint.print as jest.Mock).mockResolvedValue(true);
++            const successCallback = jest.fn();
++            const errorCallback = jest.fn();
++
++            const result = await printPdf(filePath, successCallback, errorCallback);
++
++            expect(RNPrint.print).toHaveBeenCalledWith({ filePath });
++            expect(result).toBe(true);
++            expect(successCallback).toHaveBeenCalledWith(true);
++            expect(errorCallback).not.toHaveBeenCalled();
++        });
++
++        it("should handle printing error", async () => {
++            const filePath = "test-file-path.pdf";
++            (RNPrint.print as jest.Mock).mockRejectedValue(new Error("Printing failed"));
++            const successCallback = jest.fn();
++            const errorCallback = jest.fn();
++
++            const result = await printPdf(filePath, successCallback, errorCallback);
++
++            expect(RNPrint.print).toHaveBeenCalledWith({ filePath });
++            expect(result).toBe(null);
++            expect(successCallback).not.toHaveBeenCalled();
++            expect(errorCallback).toHaveBeenCalledWith(new Error("Printing failed"));
++        });
++
++        it("should call successCallback if provided", async () => {
++            const filePath = "test-file-path.pdf";
++            (RNPrint.print as jest.Mock).mockResolvedValue(true);
++            const successCallback = jest.fn();
++
++            await printPdf(filePath, successCallback);
++
++            expect(successCallback).toHaveBeenCalledWith(true);
++        });
++
++        it("should call errorCallback if provided", async () => {
++            const filePath = "test-file-path.pdf";
++            (RNPrint.print as jest.Mock).mockRejectedValue(new Error("Printing failed"));
++            const errorCallback = jest.fn();
++
++            await printPdf(filePath, undefined, errorCallback);
++
++            expect(errorCallback).toHaveBeenCalledWith(new Error("Printing failed"));
++        });
++    });
++});
+```
+
+### File: /__tests__/app/lib/regex-validate-operation.test.ts
+
+#### Hunk: Lines 1-51 (add)
+```diff
++import { getHost, validateEmail, validateGSMNo } from "../../../app/lib/regex-validate-operation";
++
++jest.mock("../../../app/config/configurations", () => ({
++    ENV: {
++        EMAIL_REGEX:
++            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
++        PHONE_REGEX: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
++        HOST_REGEX: /^(?:https?:\/\/)([^\/]+)([^\?]*)\??(.*)$/
++    }
++}));
++
++describe("regex-validate-operation", () => {
++    const { ENV } = require("../../../app/config/configurations");
++
++    describe("validateEmail", () => {
++        it("should return true for valid email addresses", () => {
++            expect(validateEmail("test@example.com")).toBe(true);
++            expect(validateEmail("test.test@example.com")).toBe(true);
++        });
++
++        it("should return false for invalid email addresses", () => {
++            expect(validateEmail("test@example")).toBe(false);
++            expect(validateEmail("testexample.com")).toBe(false);
++        });
++    });
++
++    describe("validateGSMNo", () => {
++        it("should return true for valid GSM numbers", () => {
++            expect(ENV.PHONE_REGEX.test("+905551234567")).toBe(true);
++            expect(ENV.PHONE_REGEX.test("05551234567")).toBe(true);
++            expect(ENV.PHONE_REGEX.test("5551234567")).toBe(true);
++        });
++
++        it("should return false for invalid GSM numbers", () => {
++            expect(ENV.PHONE_REGEX.test("123")).toBe(false);
++            expect(ENV.PHONE_REGEX.test("abc")).toBe(false);
++        });
++    });
++
++    describe("getHost", () => {
++        it("should return the host for valid URLs", () => {
++            const result = getHost("https://www.example.com");
++            expect(result ? result[1] : null).toBe("www.example.com");
++        });
++
++        it("should return null for invalid URLs", () => {
++            const result = getHost("invalid-url");
++            expect(result).toBe(null);
++        });
++    });
++});
+```
+
+### File: /app/lib/regex-validate-operation.ts
+
+#### Hunk: Lines 1-36 (add)
+```diff
+ import { ENV } from "../config/configurations";
+ 
++/**
++ * Girilen metnin geçerli bir GSM (cep telefonu) numarası olup olmadığını kontrol eder.
++ *
++ * @param {string} text - Doğrulanmak istenen telefon numarası.
++ * @returns {boolean} Geçerli bir GSM numarasıysa `true`, değilse `false` döner.
++ *
++ */
+ function validateGSMNo(text: string): boolean {
+   const re = ENV.PHONE_REGEX2;
+   return re.test(String(text).toLowerCase());
+ }
+ 
++/**
++ * Girilen metnin geçerli bir e-posta adresi olup olmadığını kontrol eder.
++ *
++ * @param {string} text - Doğrulanmak istenen e-posta adresi.
++ * @returns {boolean} Geçerli bir e-posta adresiyse `true`, değilse `false` döner.
++ *
++ */
+ function validateEmail(text: string): boolean {
+   const re = ENV.EMAIL_REGEX;
+   return re.test(String(text).toLowerCase());
+ }
+ 
++/**
++ * Verilen URL içinden host bilgisini düzenli ifade kullanarak ayıklar.
++ *
++ * @param {string} url - Host bilgisi alınmak istenen URL.
++ * @returns {RegExpExecArray | null} Eşleşme bulunduysa `RegExpExecArray`, bulunamadıysa `null` döner.
++ *
++ */
+ function getHost(url: string): RegExpExecArray | null {
+   return ENV.HOST_REGEX.exec(url);
+ }
+```
+
+### File: /app/lib/orientation.ts
+
+#### Hunk: Lines 4-25 (add)
+```diff
+ import { ENV } from "../config/configurations";
+ 
+ /** @deprecated use the useNativeScreenDimensions */
++
++/**
++ * Ekran boyutlarını, yönünü (dikey/yatay), çapraz (diagonal) uzunluğu ve ölçek bilgisini dönen özel bir React Hook.
++ * 
++ * Bu hook ekran boyutu değiştiğinde (örneğin cihaz döndüğünde) otomatik olarak yeniden hesaplama yapar.
++ *
++ * @returns {{
++*   width: number;
++*   height: number;
++*   scale: number;
++*   fontScale: number;
++*   diagonal: number;
++*   isLandscape: boolean;
++* }} Güncel ekran boyutu verileri.
++*
++*/
+ const useScreenDimensions = () => {
+   const [screenData, setScreenData] = useState(Dimensions.get("window"));
+ 
+```
+
+#### Hunk: Lines 46-67 (add)
+```diff
+   return data;
+ };
+ 
++/**
++ * `useWindowDimensions` hook'unu kullanarak ekran boyutları, yönü, çapraz uzunluğu ve ölçek bilgilerini döner.
++ * 
++ * Bu hook sistemden otomatik olarak güncel ekran boyutlarını alır ve yeniden render durumunda değerler otomatik güncellenir.
++ * Özellikle responsive tasarımlar için faydalıdır.
++ *
++ * @returns {{
++*   width: number;
++*   height: number;
++*   scale: number;
++*   fontScale: number;
++*   diagonal: number;
++*   isLandscape: boolean;
++* }} Güncel ekran ölçü ve ölçek bilgileri.
++*
++*/
+ const useNativeScreenDimensions = () => {
+   const screenData = useWindowDimensions();
+ 
+```
+
+### File: /__tests__/app/lib/responsive.test.ts
+
+#### Hunk: Lines 1-65 (add)
+```diff
++import { ENV } from "../../../app/config/configurations";
++import { diagonalPercentageToDP, heightPercentageToDP, widthPercentageToDP } from "../../../app/lib/responsive";
++
++describe("Responsive Functions", () => {
++  const originalENV = { ...ENV };
++
++  afterEach(() => {
++    // Restore original ENV after each test
++    Object.assign(ENV, originalENV);
++  });
++
++  it("widthPercentageToDP should return correct value", () => {
++    ENV.deviceWidth = 768;
++    expect(widthPercentageToDP("50%")).toBe(384);
++    expect(widthPercentageToDP("25%")).toBe(192);
++  });
++
++  it("widthPercentageToDP should return undefined when percentage is undefined", () => {
++    ENV.deviceWidth = 768;
++    expect(widthPercentageToDP(undefined)).toBeUndefined();
++  });
++
++  it("widthPercentageToDP should return undefined when screenWidth is undefined", () => {
++    const originalDeviceWidth = ENV.deviceWidth;
++    (ENV as any).deviceWidth = undefined;
++    expect(widthPercentageToDP("50%")).toBeUndefined();
++    ENV.deviceWidth = originalDeviceWidth; // Restore original value
++  });
++
++  it("heightPercentageToDP should return correct value", () => {
++    ENV.deviceHeight = 1024;
++    expect(heightPercentageToDP("50%")).toBe(512);
++    expect(heightPercentageToDP("25%")).toBe(256);
++  });
++
++  it("heightPercentageToDP should return undefined when percentage is undefined", () => {
++    ENV.deviceHeight = 1024;
++    expect(heightPercentageToDP(undefined)).toBeUndefined();
++  });
++
++  it("heightPercentageToDP should return undefined when screenHeight is undefined", () => {
++    const originalDeviceHeight = ENV.deviceHeight;
++    (ENV as any).deviceHeight = undefined;
++    expect(heightPercentageToDP("50%")).toBeUndefined();
++    ENV.deviceHeight = originalDeviceHeight; // Restore original value
++  });
++
++  it("diagonalPercentageToDP should return correct value", () => {
++    ENV.diagonalScreenSize = 1280;
++    expect(diagonalPercentageToDP("50%")).toBe(640);
++    expect(diagonalPercentageToDP("25%")).toBe(320);
++  });
++
++  it("diagonalPercentageToDP should return undefined when percentage is undefined", () => {
++    ENV.diagonalScreenSize = 1280;
++    expect(diagonalPercentageToDP(undefined)).toBeUndefined();
++  });
++
++  it("diagonalPercentageToDP should return undefined when screenDiagonal is undefined", () => {
++    const originalDiagonalScreenSize = ENV.diagonalScreenSize;
++    (ENV as any).diagonalScreenSize = undefined;
++    expect(diagonalPercentageToDP("50%")).toBeUndefined();
++    ENV.diagonalScreenSize = originalDiagonalScreenSize; // Restore original value
++  });
++});
+```
+
+### File: /__tests__/app/lib/sentry/SentryMobile.test.ts
+
+#### Hunk: Lines 1-373 (add)
+```diff
++import * as Sentry from "@sentry/react-native";
++
++import { HttpClient as HttpClientIntegration } from "@sentry/integrations";
++
++import { ENV } from "../../../../app/config/configurations";
++import { APP_JSON } from "../../../../app/config/customer-config";
++import { getHost } from "../../../../app/lib/regex-validate-operation";
++import { SentryMobile } from "../../../../app/lib/sentry/SentryMobile";
++import { AuthSliceInitialState } from "../../../../app/store/slices/auth.slice";
++import { AuthUserFlowAccountWithAccount } from "../../../../app/types/responses/AuthUserFlowAccount";
++import { Enviroment } from "../../../../app/types/responses/Enviroment";
++import { GetCitiesResponse } from "../../../../app/types/responses/GetCitiesResponse";
++import { GetUsersFromUserGroupResponse } from "../../../../app/types/responses/GetUsersFromUserGroupResponse";
++
++jest.mock("lib/regex-validate-operation", () => ({
++  getHost: jest.fn((url: string) => {
++    if (url) return ["https://test.example.com", "test.example.com"];
++    return null;
++  })
++}));
++
++jest.mock("config/configurations");
++
++jest.mock("config/customer-config", () => ({
++  APP_JSON: {
++    name: "LenaFieldRN",
++    displayName: "Field",
++    version: "5.0.0",
++    environment: "Test_Prod",
++    codepushVersion: 1,
++    iosVersion: "13.5.0",
++    versionCode: 1,
++    androidVersionCode: 53,
++    iosVersionCode: 56,
++    SELECTED_COMPANY_OPTION: "01",
++    branch: { main: "version/v4.12" },
++    defaultSchemes: ["fieldApp", "flowApp"],
++    associatedDomains: [
++      "testomp.lena.solutions",
++      "omptest.opet.com.tr",
++      "audit.lena.solutions",
++      "omp.opet.com.tr",
++      "ipragazsatis.lena.solutions",
++      "ipragazsap.lena.solutions",
++      "direktsatis.ipragaz.com.tr",
++      "teknikdestek.ipragaz.com.tr",
++      "lenateknikdestek.ipragaz.com.tr",
++      "oyak.lena.solutions",
++      "geosfield.oyakpetrol.com.tr",
++      "field.lena.solutions",
++      "192.168.1.102",
++      "fieldpreprod.lena.solutions",
++      "turpak.lena.solutions",
++      "fieldpoc.lenasoftware.com",
++      "fielddemo.lenasoftware.com",
++      "ofield.lenasoftware.com",
++      "field.lenasoftware.com",
++      "falcon.lenasoftware.com",
++      "falcon-test.lenasoftware.com",
++      "field.turpak.com.tr",
++      "atostalep.com",
++      "flow.lena.solutions",
++      "be32-185-81-238-2.ngrok-free.app",
++      "kocwave.lena.solutions",
++      "catiteknoloji.lena.solutions",
++      "sahakontroltest.aydemperakende.com.tr",
++      "sahakontrol.aydemperakende.com.tr",
++      "fusiontest.turpak.com.tr",
++      "shellmuhendisliksaha.atostalep.com",
++      "699e-185-81-238-2.ngrok-free.app",
++      "699e-185-81-238-2.ngrok-free.app",
++      "odeabank.lenasoftware.com",
++      "sys.utts.net.tr",
++      "sys.utts.gov.tr",
++      "automation-field.lena.solutions",
++      "release-field.lena.solutions",
++      "automation-field.lena.solutions",
++      "automation-field.lena.solutions",
++      "release-field.lena.solutions",
++      "automation-field.lena.solutions",
++      "shell-merge.lena.solutions",
++      "shell-old.lena.solutions",
++      "ipragaztuplu.lena.solutions",
++      "sahadenetim.opetcloud.net",
++      "sahadenetim-test.opetcloud.net",
++      "*.lena.solutions",
++      "*.opet.com.tr",
++      "*.ipragaz.com.tr",
++      "*.oyakpetrol.com.tr",
++      "*.lenasoftware.com",
++      "*.turpak.com.tr",
++      "*.atostalep.com",
++      "*.ngrok-free.app",
++      "*.aydemperakende.com.tr",
++      "*.utts.net.tr",
++      "*.utts.gov.tr",
++      "*.opetcloud.net"
++    ]
++  }
++}));
++
++jest.mock("@sentry/react-native", () => {
++  return {
++    init: jest.fn(),
++    ReactNavigationInstrumentation: jest.fn(),
++    ReactNativeTracing: function (options: any) {
++      (this as any)._options = options;
++    }
++  };
++});
++
++jest.mock("@sentry/integrations", () => {
++  return {
++    HttpClient: function (options: any) {
++      (this as any).options = options;
++    }
++  } as any;
++});
++
++enum AuthTypes {
++  Form = "form",
++  SSO = "sso"
++}
++
++const mockAuthUserAccount = {
++  userId: 123,
++  email: "test@example.com",
++  username: "testuser",
++  firstName: "Test",
++  lastName: "User",
++  phone: "+1234567890",
++  isActive: true,
++  isDeleted: false,
++  createdDate: "2023-01-01T00:00:00Z",
++  lastLoginDate: "2023-06-01T00:00:00Z",
++  userLogo: "logo.png",
++  userLogoUrl: "https://example.com/logo.png",
++  name: "Test",
++  lastname: "User",
++  department: "IT",
++  position: "Developer",
++  language: "en",
++  timezone: "UTC+3",
++  permissions: [
++    {
++      name: "test-permission" as "string",
++      authorizedScenarios: [
++        {
++          authorizedScenario: 1,
++          authorizedLocationIds: [101, 102],
++          authorizedRegionIds: [201, 202],
++          isAuthorizedAllRegions: false
++        }
++      ]
++    }
++  ]
++};
++
++const mockAuthUserFlowAccount: AuthUserFlowAccountWithAccount = {
++  account: mockAuthUserAccount,
++  applicationPublicServer: "public-server",
++  applicationCode: "APP123",
++  accessToken: "access-token",
++  refreshToken: "refresh-token",
++  expiration: "2023-01-01T00:00:00Z"
++};
++
++const mockCities: GetCitiesResponse[] = [
++  { cityId: 1, name: "Istanbul" },
++  { cityId: 2, name: "Ankara" }
++];
++
++const mockUsersFromUserGroup: GetUsersFromUserGroupResponse[] = [
++  {
++    userGroupName: "Admin Group",
++    locationCode: "LOC001",
++    userGroupId: 1,
++    userId: 1,
++    fullname: "User One",
++    passwordCreateDate: "2023-01-01",
++    userLogo: "user1.png",
++    name: "User",
++    lastname: "One",
++    email: "user1@example.com",
++    phone: "+1234567890"
++  },
++  {
++    userGroupName: "User Group",
++    locationCode: "LOC002",
++    userGroupId: 2,
++    userId: 2,
++    fullname: "User Two",
++    passwordCreateDate: "2023-01-02",
++    userLogo: "user2.png",
++    name: "User",
++    lastname: "Two",
++    email: "user2@example.com",
++    phone: "+1234567891"
++  }
++];
++
++const mockUserInformation: AuthSliceInitialState = {
++  jwtToken: "mock-jwt-token",
++  tokenOffset: "mock-offset",
++  account: mockAuthUserAccount,
++  lockSecond: 0,
++  isLocked: false,
++  twoFactor: true,
++  twoFactorTime: 1234567890,
++  locationId: 1,
++  locationCode: "LOC001",
++  isPasswordExpired: false,
++  isRequestPermitted: true,
++  userOrderPermission: {
++    canOrder: true,
++    canTransfer: false,
++    addProduct: true
++  },
++  externalApps: {
++    CRM: true,
++    ERP: false
++  },
++  companyId: 1,
++  sourceUserId: null,
++  flow: mockAuthUserFlowAccount,
++  initialized: true,
++  isAuthenticated: true,
++  appDownloadUrl: null,
++  appVersion: null,
++  passwordExpired: false,
++  startedTasksExist: false,
++  changePassword: false,
++  isWorkPlanCreateRequired: false,
++  unReadNotificationCount: 0,
++  cities: mockCities,
++  userPermissions: [1, 2, 3],
++  usersFromUserGroup: mockUsersFromUserGroup
++};
++
++const mockEnv: Enviroment = {
++  name: "test-environment",
++  url: "https://test.example.com",
++  isFlow: false,
++  isOfflineModeEnable: true,
++  authTypes: [AuthTypes.Form],
++  sslConfig: {
++    enabled: true,
++    host: "testhost",
++    port: 443
++  }
++};
++
++beforeEach(() => {
++  jest.clearAllMocks();
++  (Sentry.init as jest.Mock).mockReset();
++});
++
++describe("SentryMobile", () => {
++  describe("init", () => {
++    it("should initialize Sentry with correct configuration", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      expect(Sentry.init).toHaveBeenCalledWith({
++        dsn: ENV.SENTRY_DSN,
++        tracesSampleRate: 0.2,
++        enableAppHangTracking: false,
++        tracesSampler: expect.any(Function),
++        attachScreenshot: true,
++        beforeSend: expect.any(Function),
++        integrations: expect.arrayContaining([expect.any(Sentry.ReactNativeTracing), expect.any(HttpClientIntegration)])
++      });
++    });
++
++    it("should set user information in beforeSend", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.user).toEqual({
++        ...mockUserInformation.account,
++        email: mockUserInformation.account?.email,
++        id: mockUserInformation.account?.userId,
++        username: mockUserInformation.account?.username
++      });
++      expect(processedEvent).toBeDefined();
++    });
++
++    it("should include appJSON and env in extra data", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.extra).toEqual({
++        appJSON: JSON.stringify(APP_JSON),
++        env: JSON.stringify(mockEnv)
++      });
++    });
++
++    it("should handle null environment", async () => {
++      await SentryMobile.init(mockUserInformation, null);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.extra).toEqual({
++        appJSON: JSON.stringify(APP_JSON),
++        env: "null"
++      });
++    });
++
++    it("should extract host from environment URL", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      expect(getHost).toHaveBeenCalledWith(mockEnv.url);
++    });
++
++    it("should configure ReactNativeTracing with correct parameters", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const tracingIntegration = initCall.integrations.find((i: any) => i instanceof Sentry.ReactNativeTracing);
++
++      expect(tracingIntegration).toBeDefined();
++      expect(tracingIntegration._options.tracingOrigins).toEqual(["test.example.com", /^\//]);
++    });
++
++    it("should add user data to navigation context", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const tracingIntegration = initCall.integrations.find((i: any) => i instanceof Sentry.ReactNativeTracing);
++
++      const testContext = { data: {} };
++      const modifiedContext = tracingIntegration._options.beforeNavigate(testContext);
++
++      expect(modifiedContext.data).toEqual({
++        codepushVersion: APP_JSON.codepushVersion.toString(),
++        user: { ...mockUserInformation.account }
++      });
++    });
++
++    it("should include HttpClientIntegration", async () => {
++      await SentryMobile.init(mockUserInformation, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const hasHttpIntegration = initCall.integrations.some((i: any) => i instanceof HttpClientIntegration);
++
++      expect(hasHttpIntegration).toBe(true);
++    });
++
++    it("should handle initialization errors gracefully", async () => {
++      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
++      (Sentry.init as jest.Mock).mockImplementationOnce(() => {
++        throw new Error("Sentry init failed");
++      });
++
++      await expect(SentryMobile.init(mockUserInformation, mockEnv)).resolves.toBe(true);
++      expect(consoleSpy).toHaveBeenCalled();
++
++      consoleSpy.mockRestore();
++    });
++
++    it("should always return a resolved promise with true", async () => {
++      const result = await SentryMobile.init(mockUserInformation, mockEnv);
++      expect(result).toBe(true);
++    });
++  });
++});
+```
+
+### File: /app/lib/location-helper.ts
+
+#### Hunk: Lines 40-57 (add)
+```diff
+   speed: null
+ };
+ 
++/**
++* Kullanıcının mevcut konum bilgisini alır.
++*
++* Konum başarıyla alınırsa latitude ve longitude bilgileriyle birlikte başarılı bir yanıt döner.
++* Konum alınamazsa kullanıcıya uyarılar gösterilir ve uygun platform ayarlarına yönlendirme yapılabilir.
++*
++* @async
++* @param {boolean} [showAlert=true] - Hata durumunda kullanıcıya uyarı gösterilip gösterilmeyeceğini belirler.
++* @param {(errorCode: GEOLOCATION_ERROR_CODES) => void} [cancelCallback] - Kullanıcı işlemi iptal ettiğinde çağrılacak geri çağırma fonksiyonu.
++* @returns {Promise<{ success: boolean; message: string; result: Location }>} Konum alma işleminin sonucu.
++*
++*/
+ const getCurrentPosition = async (showAlert = true, cancelCallback?: (errorCode: GEOLOCATION_ERROR_CODES) => void) => {
+   let response: {
+     success: boolean;
+```
+
+#### Hunk: Lines 150-169 (add)
+```diff
+   });
+ };
+ 
++
++/**
++* Verilen koordinat bilgisine göre Google Maps Geocoding API kullanarak şehir ve ilçe isimlerini getirir.
++*
++* @async
++* @param {UnitCreateLocationModalLocationProps} coordinate - Enlem ve boylam bilgisini içeren koordinat nesnesi.
++* @param {Function} getStaticText - Statik metinleri (örn. hata mesajları) almak için kullanılan fonksiyon.
++* @param {ApiResponseContextType} responseContext - Hata yönetimi ve kullanıcıya bilgi gösterimi için kullanılan yanıt bağlamı nesnesi.
++* @returns {Promise<{ cityName?: string; districtName?: string; googleResult: GoogleGeoCodeResult["results"][0] }>} 
++* Şehir adı, ilçe adı ve Google Maps tarafından döndürülen ilk eşleşen sonuç objesi.
++*
++* @throws API bağlantısı başarısız olursa veya geçersiz bir yanıt alındığında bir hata fırlatılır.
++*
++*/
+ async function getCityAndDistrictNameByCoordinate(
+   coordinate: UnitCreateLocationModalLocationProps,
+   getStaticText: Function,
+```
+
+#### Hunk: Lines 222-237 (add)
+```diff
+   }
+ }
+ 
++/**
++* Verilen isim ile eşleşen şehir veya ilçe bilgisini liste içinde arar.
++* 
++* Türkçe karakterler göz ardı edilerek büyük/küçük harf duyarsız karşılaştırma yapılır.
++*
++* @param {any[]} areaList - Şehir veya ilçe nesnelerini içeren liste.
++* @param {string} areaName - Aranacak şehir veya ilçe adı.
++* @returns {any|undefined} Eşleşen şehir/ilçe nesnesi ya da bulunamazsa `undefined`.
++*
++*/
+ function findCityOrDistrictcByName(areaList: any[], areaName: string) {
+   return areaList.find(
+     area => CommonMethods.replaceTurkishSpecialChars(area.name).toUpperCase() === CommonMethods.replaceTurkishSpecialChars(areaName).toUpperCase()
+```
+
+#### Hunk: Lines 269-285 (add)
+```diff
+   } as LocationWithDelta;
+ };
+ 
++/**
++* Verilen enlem (latitude) ve boylam (longitude) listelerine göre
++* ortalama konum ve harita gösterimi için delta değerlerini hesaplar.
++*
++* Tek bir koordinat varsa ona odaklanır, birden fazla varsa hepsinin haritada görünmesini sağlayacak değerleri döner.
++*
++* @param {number[]} [latitudeList] - Enlem değerlerini içeren liste.
++* @param {number[]} [longitudeList] - Boylam değerlerini içeren liste.
++* @returns {LocationWithDelta} Ortalama koordinatlar ve delta (yakınlaştırma) bilgilerini içeren nesne.
++*
++*/
+ function addDistanceToEachDestination(currentPosition: Location, destinations: RoutesAuditModel[]) {
+   // currentPosition Model : {latitude:number , longitude:number}
+   // destinations Model :[ {latitude:number , longitude:number}]
+```
+
+#### Hunk: Lines 308-325 (add)
+```diff
+   return newDestinations;
+ }
+ 
++/**
++* Başlangıç konumuna göre en uzak hedefi belirler ve geri kalanları ara nokta (waypoint) olarak ayırır.
++*
++* Verilen hedef konumlar mesafeye göre sıralanır, en uzak hedef `lastDestination` olarak atanır.
++* Diğer tüm hedefler `waypoints` olarak listelenir.
++*
++* @param {Location} origin - Başlangıç konumu.
++* @param {RoutesAuditModel[]} [destinations] - Hedef konumların listesi.
++* @returns {{ firstDestination?: object; lastDestination: RoutesAuditModel; waypoints: RoutesAuditModel[] } | undefined} 
++* Rota bilgilerini içeren nesne veya hedef yoksa `undefined`.
++*
++*/
+ function findDestinationsAndWaypoints(origin: Location, destinations?: RoutesAuditModel[]) {
+   const route = { firstDestination: {}, lastDestination: { auditId: null } as unknown as RoutesAuditModel, waypoints: [] as RoutesAuditModel[] };
+   if (!destinations || destinations.length === 0) {
+```
+
+#### Hunk: Lines 333-348 (add)
+```diff
+   return route;
+ }
+ 
++/**
++* Geçerli konumu alarak hedeflerin mesafelerini hesaplar, en uzak olanı varış noktası (lastDestination),
++* kalanları ise ara nokta (waypoint) olarak belirler ve yinelenen birimleri filtreler.
++*
++* @async
++* @param {any[]} destinations - Hedeflerin bulunduğu liste (her biri konum bilgisi içermelidir).
++* @returns {Promise<{ firstDestination?: object; lastDestination: any; waypoints: any[] } | undefined>}
++* Geçerli konum alınabilirse rota bilgileri (lastDestination ve waypoints), aksi halde `undefined` döner.
++*
++*/
+ async function getDestinationsAndWaypoints(destinations: any[]) {
+   const response = await getCurrentPosition(false);
+   if (response.success) {
+```
+
+#### Hunk: Lines 369-381 (add)
+```diff
+   // }
+ }
+ 
++/**
++* Platforma göre (Android veya iOS) konum izni olup olmadığını kontrol eder.
++*
++* @async
++* @returns {Promise<Boolean>} Konum izni verilmişse `true`, aksi takdirde `false` döner.
++*
++*/
+ async function checkLocationPermission(): Promise<Boolean> {
+   return Platform.OS === "android" ? AndroidPermissions.checkLocationPermission() : IosPermissions.checkLocationPermission();
+ }
+```
+
+### File: /__tests__/app/lib/route-helper.test.ts
+
+#### Hunk: Lines 1-239 (add)
+```diff
++import { getRoadInfo } from "../../../app/api/userRoad";
++import { getDateTime, getEpochTimestampInSeconds, getWeekNumber } from "../../../app/lib/date-helper";
++import * as dateHelper from "../../../app/lib/date-helper";
++import * as routeHelper from "../../../app/lib/route-helper";
++
++jest.mock("../../../app/api/userRoad", () => ({
++  getRoadInfo: jest.fn()
++}));
++
++jest.mock("../../../app/lib/date-helper", () => ({
++  getWeekNumber: jest.fn(),
++  getEpochTimestampInSeconds: jest.fn(),
++  getDateTime: jest.fn()
++}));
++
++describe("route-helper", () => {
++  beforeAll(() => {
++    jest.spyOn(dateHelper, "getDateTime").mockImplementation((input: string | number | Date | null) => {
++      if (input === null || input === undefined) return new Date();
++      if (typeof input === "string" || typeof input === "number") return new Date(input);
++      if (input instanceof Date) return input;
++      return new Date();
++    });
++
++    jest.spyOn(dateHelper, "getEpochTimestampInSeconds").mockImplementation((date: Date) => {
++      return Math.floor(date.getTime() / 1000);
++    });
++  });
++
++  describe("getWeekDataResult", () => {
++    it("should return data on successful API call", async () => {
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date("2024-05-20").getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++      (getRoadInfo as jest.Mock).mockResolvedValue({ success: true, result: mockData });
++
++      const result = await routeHelper.getWeekDataResult(10);
++
++      expect(getRoadInfo).toHaveBeenCalledWith(10);
++      expect(result).toEqual(mockData);
++    });
++
++    it("should reject with an error on failed API call", async () => {
++      const mockError = new Error("API error");
++      (getRoadInfo as jest.Mock).mockRejectedValue(mockError);
++
++      await expect(routeHelper.getWeekDataResult(10)).rejects.toThrow(mockError);
++
++      expect(getRoadInfo).toHaveBeenCalledWith(10);
++    });
++
++    it("should use current week number if no week number is provided", async () => {
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date("2024-05-20").getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++      (getRoadInfo as jest.Mock).mockResolvedValue({ success: true, result: mockData });
++      (getWeekNumber as jest.Mock).mockReturnValue(21);
++
++      await routeHelper.getWeekDataResult();
++
++      expect(getRoadInfo).toHaveBeenCalledWith(21);
++    });
++  });
++
++  describe("getLastUnfilledDayOfCurrentRoute", () => {
++    it("should return undefined if no week data is available", async () => {
++      jest.spyOn(routeHelper, "getWeekDataResult").mockResolvedValue({
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date("2024-06-10").getTime(),
++            startKm: 0,
++            endKm: 0,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      });
++
++      const result = await routeHelper.getLastUnfilledDayOfCurrentRoute();
++
++      expect(result).toBeUndefined();
++    });
++
++    it("should return undefined if no unfilled days are found", async () => {
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date("2024-05-20").getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          },
++          {
++            date: new Date("2024-05-21").getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 2,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++      (routeHelper.getWeekDataResult as jest.Mock).mockResolvedValue(mockData);
++
++      const result = await routeHelper.getLastUnfilledDayOfCurrentRoute();
++
++      expect(result).toBeUndefined();
++    });
++
++    it("should return the last unfilled day", async () => {
++      jest.useFakeTimers().setSystemTime(new Date(Date.UTC(2024, 4, 22, 0, 0, 0)));
++
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date(Date.UTC(2024, 4, 20, 0, 0, 0)).getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          },
++          {
++            date: new Date(Date.UTC(2024, 4, 21, 0, 0, 0)).getTime(),
++            startKm: null,
++            endKm: null,
++            userRoadInfoId: 2,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++
++      (routeHelper.getWeekDataResult as jest.Mock).mockResolvedValue(mockData);
++
++      (dateHelper.getDateTime as jest.Mock).mockImplementation((timestamp: number) => {
++        return new Date(timestamp);
++      });
++
++      (dateHelper.getEpochTimestampInSeconds as jest.Mock).mockImplementation((date: Date) => {
++        return date.getTime();
++      });
++
++      const result = await routeHelper.getLastUnfilledDayOfCurrentRoute();
++
++      expect(result).toBeUndefined();
++
++      jest.useRealTimers();
++    });
++
++    it("should return the current day if it's unfilled", async () => {
++      const today = new Date("2024-05-26").getTime();
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: new Date("2024-05-20").getTime(),
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          },
++          {
++            date: today,
++            startKm: null,
++            endKm: null,
++            userRoadInfoId: 2,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++      (routeHelper.getWeekDataResult as jest.Mock).mockResolvedValue(mockData);
++
++      const result = await routeHelper.getLastUnfilledDayOfCurrentRoute();
++
++      expect(result).toBeUndefined();
++    });
++
++    it("should return yesterday if it's unfilled", async () => {
++      const today = new Date("2024-05-26").getTime();
++      const yesterday = new Date("2024-05-25").getTime();
++      const mockData = {
++        lastPlateCode: "34",
++        roadInfos: [
++          {
++            date: yesterday,
++            startKm: null,
++            endKm: null,
++            userRoadInfoId: 1,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          },
++          {
++            date: today,
++            startKm: 100,
++            endKm: 200,
++            userRoadInfoId: 2,
++            vehicleType: 1,
++            vehicleTypeName: "Car"
++          }
++        ]
++      };
++
++      (routeHelper.getWeekDataResult as jest.Mock).mockResolvedValue(mockData);
++
++      const result = await routeHelper.getLastUnfilledDayOfCurrentRoute();
++
++      expect(result).toBeUndefined();
++    });
++  });
++});
+```
+
+### File: /__tests__/app/lib/sentry/SentryBackend.test.ts
+
+#### Hunk: Lines 1-224 (add)
+```diff
++import * as Sentry from "@sentry/react-native";
++
++import { Enums } from "../../../../app/assets/data";
++import { ENV } from "../../../../app/config/configurations";
++import { SentryBackend } from "../../../../app/lib/sentry/SentryBackend";
++import { AuthUser, Enviroment } from "../../../../app/types/responses";
++
++const mockAuthUserAccount = {
++  userId: 123,
++  email: "test@example.com",
++  username: "testuser",
++  firstName: "Test",
++  lastName: "User",
++  phone: "+1234567890",
++  isActive: true,
++  isDeleted: false,
++  createdDate: "2023-01-01T00:00:00Z",
++  lastLoginDate: "2023-06-01T00:00:00Z",
++  userLogo: "logo.png",
++  userLogoUrl: "https://example.com/logo.png",
++  name: "Test",
++  lastname: "User",
++  department: "IT",
++  position: "Developer",
++  language: "en",
++  timezone: "UTC+3"
++};
++
++const mockUserOrderPermission = {
++  canOrder: true,
++  canTransfer: false,
++  addProduct: true
++};
++
++const mockAuthUserFlowAccount = {
++  applicationPublicServer: "public-server",
++  applicationCode: "APP123",
++  accessToken: "access-token",
++  refreshToken: "refresh-token",
++  expiration: "2023-01-01T00:00:00Z",
++  permissions: [
++    {
++      name: "test-permission",
++      authorizedScenarios: [
++        {
++          authorizedScenario: 1,
++          authorizedLocationIds: [101, 102],
++          authorizedRegionIds: [201, 202],
++          isAuthorizedAllRegions: false
++        }
++      ]
++    }
++  ]
++};
++
++const mockExternalApps: Record<string, boolean> = {
++  CRM: true,
++  ERP: false,
++  BI: true,
++  HRM: false
++};
++
++const mockUser: AuthUser = {
++  jwtToken: "mock-jwt-token",
++  tokenOffset: "mock-offset",
++  account: mockAuthUserAccount,
++  lockSecond: 0,
++  isLocked: false,
++  twoFactor: true,
++  twoFactorTime: 1234567890,
++  locationId: 1,
++  locationCode: "LOC001",
++  isPasswordExpired: false,
++  isRequestPermitted: true,
++  userOrderPermission: mockUserOrderPermission,
++  flow: mockAuthUserFlowAccount,
++  externalApps: mockExternalApps,
++  companyId: 999,
++  sourceUserId: null
++};
++
++const mockEnv: Enviroment = {
++  name: "test-environment",
++  url: "https://test.example.com",
++  isFlow: false,
++  isOfflineModeEnable: true,
++  authTypes: ["OAUTH2", "BASIC_AUTH"] as any,
++  sslConfig: {
++    enabled: true,
++    host: "testhost",
++    port: 443
++  }
++};
++
++jest.mock("../../../../app/config/customer-config", () => ({
++  APP_JSON: undefined,
++  __esModule: true
++}));
++
++describe("SentryBackend", () => {
++  beforeEach(() => {
++    jest.clearAllMocks();
++    (Sentry.init as jest.Mock) = jest.fn();
++    (Sentry.setUser as jest.Mock) = jest.fn();
++  });
++
++  describe("init", () => {
++    it("should initialize Sentry with correct configuration", async () => {
++      await SentryBackend.init(mockUser, mockEnv);
++
++      expect(Sentry.init).toHaveBeenCalledWith({
++        dsn: ENV.SENTRY_DSN_BACKEND,
++        tracesSampleRate: 0.2,
++        tracesSampler: expect.any(Function),
++        beforeSend: expect.any(Function)
++      });
++    });
++
++    it("should enrich events with user data in beforeSend", async () => {
++      await SentryBackend.init(mockUser, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.user).toEqual({
++        ...mockUser.account,
++        email: mockUser.account?.email,
++        id: mockUser.account?.userId,
++        username: mockUser.account?.username
++      });
++    });
++
++    it("should include environment data in extra fields", async () => {
++      const response = await SentryBackend.init(mockUser, mockEnv);
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++      expect(processedEvent.extra).toEqual({
++        appJSON: JSON.stringify(undefined),
++        env: JSON.stringify(mockEnv)
++      });
++    });
++
++    it("should handle null user account gracefully", async () => {
++      const nullAccountUser = {
++        ...mockUser,
++        account: null
++      };
++
++      await SentryBackend.init(nullAccountUser, mockEnv);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.user).toEqual({
++        email: undefined,
++        id: undefined,
++        username: undefined
++      });
++    });
++
++    it("should handle null environment gracefully", async () => {
++      await SentryBackend.init(mockUser, null);
++
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const testEvent = {};
++      const processedEvent = initCall.beforeSend(testEvent);
++
++      expect(processedEvent.extra).toEqual({
++        appJSON: JSON.stringify(undefined),
++        env: "null"
++      });
++    });
++
++    it("should handle initialization errors silently", async () => {
++      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
++      (Sentry.init as jest.Mock).mockImplementationOnce(() => {
++        throw new Error("Sentry init failed");
++      });
++
++      await expect(SentryBackend.init(mockUser, mockEnv)).resolves.toBe(true);
++      expect(consoleSpy).toHaveBeenCalled();
++
++      consoleSpy.mockRestore();
++    });
++
++    it("should always return a resolved promise with true", async () => {
++      const result = await SentryBackend.init(mockUser, mockEnv);
++      expect(result).toBe(true);
++    });
++
++    it("should use the correct DSN from configuration", async () => {
++      await SentryBackend.init(mockUser, mockEnv);
++      expect(Sentry.init).toHaveBeenCalledWith(
++        expect.objectContaining({
++          dsn: ENV.SENTRY_DSN_BACKEND
++        })
++      );
++    });
++
++    it("should set tracesSampler to return 0.2", async () => {
++      await SentryBackend.init(mockUser, mockEnv);
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      expect(initCall.tracesSampler()).toBe(0.2);
++    });
++
++    it("should set user context with Sentry.setUser", async () => {
++      await SentryBackend.init(mockUser, mockEnv);
++      console.log("Sentry", Sentry);
++      const initCall = (Sentry.init as jest.Mock).mock.calls[0][0];
++      const mockEvent = {};
++      const returnedEvent = initCall.beforeSend(mockEvent);
++
++      expect(returnedEvent.user).toEqual({
++        ...mockAuthUserAccount,
++        id: mockUser.account?.userId,
++        email: mockUser.account?.email,
++        username: mockUser.account?.username || undefined
++      });
++    });
++  });
++});
+```
+
+### File: /app/lib/print-provider.ts
+
+#### Hunk: Lines 3-18 (add)
+```diff
+ 
+ import { removeTempPDFFilesAfterPrint } from "./task-file-helper";
+ 
++/**
++ * Verilen HTML içeriğini PDF'e dönüştürür ve yazdırma işlemini başlatır.
++ * Yazdırma tamamlandıktan sonra geçici PDF dosyasını temizler ve varsa verilen callback fonksiyonunu çalıştırır.
++ *
++ * @param {string} htmlContent - Yazdırılacak HTML içeriği.
++ * @param {() => void} [callback] - Yazdırma işlemi tamamlandığında çalıştırılacak opsiyonel callback fonksiyonu.
++ * 
++ * @returns {Promise<any>} Yazdırma sonucunu temsil eden bir `Promise`. Hata oluşursa `null` döner.
++ * 
++ */
+ const printHtml = async (htmlContent: string, callback?: () => void) => {
+   await removeTempPDFFilesAfterPrint();
+ 
+```
+
+#### Hunk: Lines 46-62 (add)
+```diff
+   return new Promise<any>(resolve => resolve(result));
+ };
+ 
++/**
++ * Belirtilen PDF dosyasını yazdırır.
++ * Yazdırma işlemi başarılı olursa `successCallback`, hata oluşursa `errorCallback` çalıştırılır.
++ *
++ * @param {string} filePath - Yazdırılacak PDF dosyasının tam yolu.
++ * @param {(printResponse: any) => void} [successCallback] - Yazdırma başarılı olduğunda çağrılacak opsiyonel callback fonksiyonu.
++ * @param {(error: unknown) => void} [errorCallback] - Yazdırma sırasında hata oluşursa çağrılacak opsiyonel callback fonksiyonu.
++ *
++ * @returns {Promise<any>} Yazdırma işleminin sonucunu temsil eden bir `Promise`. Hata durumunda `null` döner.
++ *
++ */
+ const printPdf = async (filePath: string, successCallback?: (printResponse: any) => void, errorCallback?: (error: unknown) => void) => {
+   let result: any;
+   try {
+```
+
+### File: /app/lib/responsive.ts
+
+#### Hunk: Lines 3-15 (add)
+```diff
+ // Style içindeki değerler iPad Pro 9.7 inç ölçülerine göre design edilmiştir.
+ // cihaz ölçüleri 768 x 1024 tür.
+ 
++/**
++ * Verilen yüzde değerini cihazın ekran genişliğine çevirir.
++ *
++ * @param {string | undefined} percentage - Yüzde olarak genişlik değeri (örn: "%50").
++ * @returns {number | undefined} Ekran genişliğine göre hesaplanan piksel değeri.
++ * Eğer `percentage` veya ekran genişliği tanımsızsa `undefined` döner.
++ */
+ const widthPercentageToDP = (percentage: string | undefined) => {
+   const screenWidth = ENV.deviceWidth;
+   if (percentage && screenWidth) {
+```
+
+#### Hunk: Lines 17-29 (add)
+```diff
+   }
+ };
+ 
++/**
++ * Verilen yüzde değerini cihazın ekran yüksekliğine çevirir.
++ *
++ * @param {string | undefined} percentage - Yüzde olarak yükseklik değeri (örn: "%50").
++ * @returns {number | undefined} Ekran yüksekliğine göre hesaplanan piksel değeri.
++ * Eğer `percentage` veya ekran yüksekliği tanımsızsa `undefined` döner.
++ */
+ const heightPercentageToDP = (percentage: string | undefined) => {
+   const screenHeight = ENV.deviceHeight;
+   if (percentage && screenHeight) {
+```
+
+#### Hunk: Lines 31-43 (add)
+```diff
+   }
+ };
+ 
++/**
++ * Verilen yüzde değerini cihazın ekran çapraz uzunluğuna (diagonal) çevirir.
++ *
++ * @param {string | undefined} percentage - Yüzde olarak çapraz uzunluk değeri (örn: "%50").
++ * @returns {number | undefined} Ekran çapraz uzunluğuna göre hesaplanan piksel değeri.
++ * Eğer `percentage` veya ekran çapraz uzunluğu tanımsızsa `undefined` döner.
++ */
+ const diagonalPercentageToDP = (percentage: string | undefined) => {
+   const screenDiagonal = ENV.diagonalScreenSize;
+   if (percentage && screenDiagonal) {
+```
+
+### File: /app/lib/sentry/SentryBackend.ts
+
+#### Hunk: Lines 8-27 (add)
+```diff
+ 
+ /** @deprecated */
+ export class SentryBackend {
++  /**
++   * Sentry hata izleme servisini başlatır ve kullanıcı ile ortam bilgilerini ekler.
++   *
++   * @param {AuthUser | null} userInformation - Oturum açmış kullanıcının bilgileri.
++   * `null` ise kullanıcı bilgisi eklenmez.
++   * @param {Enviroment | null} envItem - Mevcut ortam bilgisi. `null` ise ortam bilgisi eklenmez.
++   * @returns {Promise<boolean>} Başlatma işlemi tamamlandığında `true` döner.
++   *
++   * @description
++   * - Sentry'yi verilen DSN ve izleme ayarları ile başlatır.
++   * - `beforeSend` ile hata raporlarına kullanıcı ve ortam bilgilerini ekler.
++   * - Kullanıcı bilgileri `event.user` içine; uygulama yapılandırması ve ortam bilgileri `event.extra` içine eklenir.
++   * - Hata olması durumunda konsola yazdırılır, uygulama akışı durmaz.
++   */
+   static init(userInformation: AuthUser | null, envItem: Enviroment | null) {
+     // provider ı burda olduğu için account context kullanılamıyor.
+     try {
+```
+
+### File: /app/lib/route-helper.ts
+
+#### Hunk: Lines 4-15 (add)
+```diff
+ 
+ import { getDateTime, getEpochTimestampInSeconds, getWeekNumber } from "./date-helper";
+ 
++/**
++ * Belirtilen hafta numarasına ait yol bilgilerini getirir.
++ *
++ * @param {_weekNumber} [any] - İsteğe bağlı olarak alınacak hafta numarası. Eğer belirtilmezse mevcut haftanın numarası kullanılır.
++ * @returns {Promise<GetRoadInfoResponse>} Yol bilgilerini içeren bir Promise döner. İstek başarısız olursa hata fırlatır.
++ */
+ const getWeekDataResult = async (_weekNumber?: any) => {
+   let weekNumber;
+   let data: GetRoadInfoResponse;
+```
+
+#### Hunk: Lines 34-47 (add)
+```diff
+   }
+ };
+ 
++/**
++ * Mevcut haftanın güzergâh bilgileri içerisinden doldurulmamış son günü döner.
++ *
++ * - Eğer gün bugünün tarihi ise, yalnızca `startKm` değeri boş olan kayıtlar dikkate alınır.
++ * - Eğer gün dünkü tarih ise, `startKm` veya `endKm` değerlerinden herhangi biri boş olan kayıtlar dikkate alınır.
++ *
++ * @returns {Promise<Road | undefined>} Doldurulmamış son günün bilgilerini içeren `Road` nesnesi veya bulunamazsa `undefined`.
++ */
+ const getLastUnfilledDayOfCurrentRoute = async () => {
+   let filteredWeekData: Road[] = [];
+   const weekData = await getWeekDataResult();
+```
+
+### File: /app/lib/sentry/SentryMobile.ts
+
+#### Hunk: Lines 15-47 (add)
+```diff
+ export const routingInstrumentation = new Sentry.ReactNavigationInstrumentation();
+ 
+ export class SentryMobile {
++  /**
++   * Sentry hata ve performans izleme servisini başlatır.
++   *
++   * @param {AuthSliceInitialState} userInformation - Oturum açmış kullanıcının bilgileri.
++   * @param {Enviroment | null} envItem - Çalışılan ortam bilgisi (örn: prod, test).
++   * @returns {Promise<boolean>} Başarılı şekilde başlatılırsa `true` döner.
++   *
++   * @description
++   * - Öncelikle ortam URL’sinden (envItem?.url) host bilgisini alır.
++   * - Sentry'yi aşağıdaki ayarlarla başlatır:
++   *    - `dsn`: Hata raporlarının gönderileceği Sentry DSN adresi.
++   *    - `tracesSampleRate`: Performans izleme oranı (%20).
++   *    - `enableAppHangTracking`: Uygulama donma takibi kapalı.
++   *    - `attachScreenshot`: Hata raporuna ekran görüntüsü eklenir.
++   *    - `beforeSend`:
++   *        - Hata raporuna kullanıcı bilgilerini (`event.user`) ekler.
++   *        - Ekstra bilgi olarak (`event.extra`) uygulama yapılandırması (`APP_JSON`)
++   *          ve ortam bilgilerini (`envItem`) JSON formatında ekler.
++   *    - `integrations`:
++   *        1. **ReactNativeTracing**:
++   *            - `tracingOrigins`: Performans takibi yapılacak host listesi (örn: API host ve regex ile kök dizin).
++   *            - `beforeNavigate`: Navigasyon öncesinde context içine ek bilgiler (codepush versiyonu, kullanıcı bilgisi) ekler.
++   *            - `routingInstrumentation`: Navigasyon takibi için kullanılan araç.
++   *        2. **HttpClientIntegration**: HTTP isteklerini izlemek için entegrasyon.
++   *
++   * - Hata olması durumunda `console.log` ile yazdırılır, uygulama çalışmaya devam eder.
++   */
+   static init(userInformation: AuthSliceInitialState, envItem: Enviroment | null) {
+     // provider ı burda olduğu için account context kullanılamıyor.
+     try {
+```
+
+### File: /app/lib/request-service-helper.ts
+
+#### Hunk: Lines 3-18 (add)
+```diff
+ import { GetTransferableProductsResponse } from "types/responses/GetTransferableProductsResponse";
+ 
+ // TODO: kullanılan yerde type bu ama ıcınde 'requestFlowProductAssembleItems' field'ı yok ÇAĞLAR BURAYA BAK !!!
++/**
++ * Montajlı ürünler arasında seri numarası eksik olanları kontrol eder.
++ *
++ * @param {GetTransferableProductsResponse} transferableProducts - Transfer edilebilir ürünler yanıt objesi.
++ * @returns {{
++ *   isSerialNumberNotExistOnProductAssembles: boolean,
++ *   productAssembleName: string | undefined
++ * }}
++ *
++ */
+ const checkIfAssembleProductHasNoSerialNumber = (transferableProducts: GetTransferableProductsResponse) => {
+   const isProductAssemblesExist =
+     transferableProducts &&
+```
+
+#### Hunk: Lines 31-45 (add)
+```diff
+   };
+ };
+ 
++/**
++ * Sökülecek (disassemble) ürünler arasında seri numarası eksik olanları kontrol eder.
++ *
++ * @param {GetTransferableProductsResponse} transferableProducts - Transfer edilebilir ürünler yanıt objesi.
++ * @returns {{
++ *   isSerialNumberNotExistOnProductDisAssembles: boolean,
++ *   productDisAssembleName: string | undefined
++ * }}
++ */
+ const checkIfDisAssembleProductHasNoSerialNumber = (transferableProducts: GetTransferableProductsResponse) => {
+   const isProductDisAssemlesExist =
+     transferableProducts &&
+```
+
+#### Hunk: Lines 58-71 (add)
+```diff
+   };
+ };
+ 
++/**
++ * İşlemde olan servis form öğesinin, tüm servis form öğeleri listesindeki indeksini döner.
++ *
++ * @param {any[]} allServiceFormItems - Tüm servis form öğelerinin listesi.
++ * @param {any} processingServiceFormItem - Şu anda işlem gören servis form öğesi.
++ * @returns {number | null} - İşlemdeki öğenin listedeki indeksi, bulunamazsa `null`.
++ *
++ */
+ const getProcessingServiceFormItemIndex = (allServiceFormItems: any, processingServiceFormItem: any) => {
+   if (!allServiceFormItems || allServiceFormItems.length === 0) {
+     return null;
+```
+
+#### Hunk: Lines 75-91 (add)
+```diff
+   return indexOfProcesingServiceFormItems;
+ };
+ 
++/**
++ * Servis formu öğeleri listesinde, işlemdeki öğeden sonra gelen öğeyi döner.
++ *
++ * @param {ServiceFormItemModelType[]} allServiceFormItems - Tüm servis form öğelerinin listesi.
++ * @param {ServiceFormItemModelType} processingServiceFormItem - Şu anda işlem gören servis form öğesi.
++ * @returns {{
++ *   isNextServiceFormItemExist: boolean;
++ *   nextServiceFormItem: ServiceFormItemModelType | null;
++ * }}
++ *
++ */
+ const getNextServiceItem = (allServiceFormItems: ServiceFormItemModelType[], processingServiceFormItem: ServiceFormItemModelType) => {
+   const result: {
+     isNextServiceFormItemExist: boolean;
+```
+
+#### Hunk: Lines 115-130 (add)
+```diff
+   return result;
+ };
+ 
++/**
++ * Servis formu öğeleri listesinde, işlemdeki öğeden önce gelen öğeyi döner.
++ *
++ * @param {ServiceFormItemModelType[]} allServiceFormItems - Tüm servis form öğelerinin listesi.
++ * @param {ServiceFormItemModelType} processingServiceFormItem - Şu anda işlem gören servis form öğesi.
++ * @returns {{
++ *   isPreviousServiceItemExist: boolean;
++ *   previousServiceItem: ServiceFormItemModelType | null;
++ * }}
++ */
+ const getPreviousServiceItem = (allServiceFormItems: ServiceFormItemModelType[], processingServiceFormItem: ServiceFormItemModelType) => {
+   const result: {
+     isPreviousServiceItemExist: boolean;
+```
+
+#### Hunk: Lines 156-180 (add)
+```diff
+   return result;
+ };
+ 
++/**
++ * Belirtilen servis form öğesine göre, listedeki önceki ve sonraki servis form öğelerini döndürür.
++ *
++ * Bu fonksiyon dahili olarak şunları kullanır:
++ * - `getPreviousServiceItem`: Önceki öğe var mı kontrol eder ve varsa döndürür.
++ * - `getNextServiceItem`: Sonraki öğe var mı kontrol eder ve varsa döndürür.
++ * - `getProcessingServiceFormItemIndex`: Mevcut öğenin listedeki sırasını bulur.
++ *
++ * @param {ServiceFormItemModelType[]} allServiceFormItems - Tüm servis form öğelerinin listesi.
++ * @param {ServiceFormItemModelType} processingServiceFormItem - Şu anda işlenen servis form öğesi.
++ *
++ * @returns {{
++ *   isPreviousServiceItemExist: boolean,
++ *   previousServiceItem: ServiceFormItemModelType | null,
++ *   isNextServiceFormItemExist: boolean,
++ *   nextServiceFormItem: ServiceFormItemModelType | null,
++ *   indexOfServiceItem: number | null
++ * }}
++ */
+ const getPreviousAndNextServiceFormItem = (allServiceFormItems: ServiceFormItemModelType[], processingServiceFormItem: ServiceFormItemModelType) => {
+   const previous = getPreviousServiceItem(allServiceFormItems, processingServiceFormItem);
+ 
+```
+
+#### Hunk: Lines 190-210 (add)
+```diff
+ };
+ 
+ //TODO: answers icin state?.showingServiceForm.answer typeını bulamadım.
++/**
++ * Zorunlu (isRequired) dinamik alanların cevaplanıp cevaplanmadığını kontrol eder.
++ *
++ * `dynamicFields` listesinde `isRequired` özelliği `true` olan alanlar filtrelenir.
++ * Bu alanlar için `answers` içinde karşılık gelen bir cevap olup olmadığı kontrol edilir.
++ * İlk eksik cevaplanan alan bulunduğunda, sonuç başarısız olarak döndürülür.
++ *
++ * @param {DynamicFieldModelType[]} dynamicFields - Tüm dinamik alanların listesi.
++ * @param {Object} answers - Alan başlığına (title) göre verilen cevapların bulunduğu nesne.
++ *
++ * @returns {{
++ *   success: boolean,
++ *   field: DynamicFieldModelType | null
++ * }}
++ */
+ const checkDynamicFieldRequiredAnswers = (dynamicFields: DynamicFieldModelType[], answers: any) => {
+   const requiredDynamicFields = dynamicFields.filter((field: any) => field.isRequired);
+   const requiredFields: any[] = [];
+```
+
+
+## Instructions
+Please review the code changes and provide feedback in the following JSON format:
+
+```json
+{
+  "findings": [
+    {
+      "file": "path/to/file",
+      "line": 123,
+      "endLine": 125,
+      "severity": "warning",
+      "message": "Issue description",
+      "suggestion": "Suggested fix",
+      "ruleId": "rule-id",
+      "category": "category-name"
+    }
+  ],
+  "summary": "Overall review summary"
+}
+```
+
+Focus on:
+- Code quality and best practices
+- Potential bugs and security issues
+- Performance considerations
+- Maintainability and readability
+- Adherence to project guidelines and rules
+
+Only report actual issues. Do not provide feedback on correct code.
+Be specific about line numbers and provide actionable suggestions.
