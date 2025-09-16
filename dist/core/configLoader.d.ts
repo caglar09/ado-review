@@ -21,6 +21,20 @@ export interface AppConfig {
         topK: number;
         timeout: number;
     };
+    openai?: {
+        defaultModel: string;
+        availableModels?: string[];
+        timeout?: number;
+    };
+    openrouter?: {
+        defaultModel: string;
+        availableModels?: string[];
+        timeout?: number;
+        baseUrl?: string;
+    };
+    llm?: {
+        defaultProvider: 'gemini-api' | 'openai' | 'openrouter';
+    };
     rateLimit: {
         batchSize: number;
         sleepMs: number;

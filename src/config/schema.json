@@ -107,7 +107,69 @@
           "type": "integer",
           "minimum": 10000,
           "maximum": 600000,
-          "description": "Timeout for Gemini CLI calls in milliseconds"
+          "description": "Timeout for Gemini requests in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "openai": {
+      "type": "object",
+      "description": "OpenAI LLM configuration",
+      "properties": {
+        "defaultModel": {
+          "type": "string",
+          "description": "Default OpenAI model to use"
+        },
+        "availableModels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Available OpenAI models"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 10000,
+          "maximum": 600000,
+          "description": "Timeout for OpenAI calls in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "openrouter": {
+      "type": "object",
+      "description": "OpenRouter LLM configuration",
+      "properties": {
+        "defaultModel": {
+          "type": "string",
+          "description": "Default OpenRouter model to use"
+        },
+        "availableModels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Available OpenRouter models"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 10000,
+          "maximum": 600000,
+          "description": "Timeout for OpenRouter calls in milliseconds"
+        },
+        "baseUrl": {
+          "type": "string",
+          "description": "Base URL for OpenRouter API"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm": {
+      "type": "object",
+      "description": "Global LLM configuration",
+      "properties": {
+        "defaultProvider": {
+          "type": "string",
+          "enum": ["gemini-api", "openai", "openrouter"],
+          "description": "Default LLM provider"
         }
       },
       "additionalProperties": false

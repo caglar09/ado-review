@@ -62,7 +62,8 @@ class GeminiAdapter {
             const prompt = this.buildReviewPrompt(context);
             const request = {
                 prompt,
-                config,
+                // Cast to local config for typing; fields are compatible
+                config: config,
                 requestId
             };
             const response = await this.callGemini(request);

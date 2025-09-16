@@ -6,6 +6,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Azure DevOps](https://img.shields.io/badge/Azure_DevOps-0078D4?style=flat&logo=azure-devops&logoColor=white)](https://azure.microsoft.com/en-us/services/devops/)
 [![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)](https://platform.openai.com/)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-0B7285?style=flat)](https://openrouter.ai/)
 
 ## 📋 İçindekiler
 
@@ -23,7 +25,7 @@
 
 ## 🎯 Genel Bakış
 
-**ADO Review CLI**, Azure DevOps Pull Request'lerini Google Gemini AI kullanarak otomatik olarak inceleyen profesyonel bir komut satırı aracıdır. Önceden tanımlanmış kurallar, proje standartları ve kod bağlamını birleştirerek kapsamlı ve akıllı kod incelemeleri gerçekleştirir.
+**ADO Review CLI**, Azure DevOps Pull Request'lerini AI ile otomatik olarak inceleyen profesyonel bir komut satırı aracıdır. Google Gemini API, OpenAI ve OpenRouter sağlayıcılarını destekler. Önceden tanımlanmış kurallar, proje standartları ve kod bağlamını birleştirerek kapsamlı ve akıllı kod incelemeleri gerçekleştirir.
 
 ### 🚀 Ana Hedefler
 
@@ -36,7 +38,7 @@
 ## ✨ Özellikler
 
 ### 🔍 İnceleme Özellikleri
-- **AI Destekli Analiz**: Google Gemini modelleri ile kod inceleme
+- **AI Destekli Analiz**: Gemini API, OpenAI veya OpenRouter modelleri ile kod inceleme
 - **Çoklu Giriş Formatı**: PR URL veya ID + organizasyon bilgileri
 - **Akıllı Dosya Filtreleme**: Include/exclude pattern'ları
 - **Severity Tabanlı Filtreleme**: Info, warn, error seviyeleri
@@ -98,8 +100,14 @@ npm link
 # Azure DevOps Personal Access Token
 export AZURE_DEVOPS_PAT="your-ado-token"
 
-# Google Gemini API Key
+# Gemini API Key (Gemini API kullanıyorsanız)
 export GEMINI_API_KEY="your-gemini-api-key"
+
+# OpenAI API Key (OpenAI kullanıyorsanız)
+export OPENAI_API_KEY="your-openai-api-key"
+
+# OpenRouter API Key (OpenRouter kullanıyorsanız)
+export OPENROUTER_API_KEY="your-openrouter-api-key"
 
 # Opsiyonel: Azure DevOps organizasyon URL'i
 export AZURE_DEVOPS_ORG_URL="https://dev.azure.com/your-org"
@@ -146,8 +154,8 @@ ado-review review --pr-url "..." --files "src/app.ts,src/utils.ts"
 ### Gelişmiş Seçenekler
 
 ```bash
-# Farklı model kullan
-ado-review review --pr-url "..." --model "gemini-1.5-flash"
+# Sağlayıcı ve model kullanımı
+ado-review review --pr-url "..." --provider openai --model "gpt-4o-mini"
 
 # Otomatik onay (tüm bulguları otomatik gönder)
 ado-review review --pr-url "..." --auto-approve
@@ -237,11 +245,24 @@ vim .adorevrc.yaml
 
 ```yaml
 # .adorevrc.yaml - Proje özel ayarları
+
+# Varsayılan sağlayıcı (gemini-api | openai | openrouter)
+llm:
+  defaultProvider: gemini-api
+
 gemini:
   defaultModel: "gemini-1.5-pro-002"
   temperature: 0.1
   topP: 0.95
   timeout: 60000
+
+openai:
+  defaultModel: "gpt-4o-mini"
+  timeout: 120000
+
+openrouter:
+  defaultModel: "openai/gpt-4o-mini"
+  timeout: 120000
 
 review:
   severityThreshold: "info"  # info, warning, error
@@ -324,7 +345,11 @@ git:
 | Değişken | Açıklama | Varsayılan |
 |----------|----------|------------|
 | `AZURE_DEVOPS_PAT` | Azure DevOps Personal Access Token | - |
-| `GEMINI_API_KEY` | Google Gemini API anahtarı | - |
+| `GEMINI_API_KEY` | Google Gemini API anahtarı (Gemini API) | - |
+| `OPENAI_API_KEY` | OpenAI API anahtarı (OpenAI) | - |
+| `OPENROUTER_API_KEY` | OpenRouter API anahtarı (OpenRouter) | - |
+| `OPENROUTER_REFERER` | OpenRouter istekleri için referer (opsiyonel) | - |
+| `OPENROUTER_TITLE` | OpenRouter istekleri için başlık (opsiyonel) | - |
 | `AZURE_DEVOPS_ORG_URL` | Azure DevOps organizasyon URL'i | - |
 | `ADO_REVIEW_LOG_LEVEL` | Log seviyesi (error/warn/info/debug) | `info` |
 | `ADO_REVIEW_TMP_DIR` | Geçici dizin yolu | OS temp |
@@ -470,9 +495,10 @@ Komutlar:
 --all-files                       # Tüm dosyaları dahil et
 ```
 
-#### AI Model Ayarları
+#### AI Sağlayıcı ve Model Ayarları
 ```bash
---model <name>                    # Gemini model adı (varsayılan: gemini-1.5-pro)
+--provider <name>                 # LLM sağlayıcısı (gemini-api|openai|openrouter)
+--model <name>                    # Seçilen sağlayıcı için model adı
 --max-context-tokens <number>     # Maksimum context token sayısı
 ```
 
@@ -507,7 +533,7 @@ Bu yapı, proje dosyaları ile klonlanan repository içeriğinin karışmasını
 #### Çıktı Formatı
 ```bash
 --format <table|json>             # Çıktı formatı (varsayılan: table)
---severity-threshold <level>      # Minimum severity seviyesi (info|warn|error)
+--severity-threshold <level>      # Minimum severity seviyesi (info|warning|error)
 --verbose                         # Detaylı çıktı
 ```
 
@@ -532,8 +558,9 @@ ado-review review \
   --include "**/*.ts" \
   --include "**/*.tsx" \
   --exclude "**/*.test.*" \
-  --model "gemini-1.5-pro" \
-  --severity-threshold "warn" \
+  --provider openai \
+  --model "gpt-4o-mini" \
+  --severity-threshold "warning" \
   --format "table" \
   --post-status \
   --verbose
@@ -649,7 +676,7 @@ ado-review-cli/
 │   │   ├── rulesLoader.ts   # Rules loading ve parsing
 │   │   ├── contextBuilder.ts # LLM context building
 │   │   ├── reviewPlanner.ts # Review strategy planning
-│   │   ├── geminiAdapter.ts # Gemini API adapter
+│   │   ├── llm/geminiApiAdapter.ts # Gemini API adapter
 │   │   ├── resultMapper.ts  # Result mapping
 │   │   ├── commenter.ts     # Comment posting
 │   │   ├── statusReporter.ts # PR status reporting

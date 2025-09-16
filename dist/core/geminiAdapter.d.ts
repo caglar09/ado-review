@@ -1,6 +1,7 @@
 import { Logger } from './logger';
 import { ErrorHandler } from './errorHandler';
 import { ReviewContext } from './contextBuilder';
+import { LLMAdapter, LLMConfig, ReviewResult } from './llm/types';
 export interface GeminiConfig {
     model: string;
     maxTokens?: number;
@@ -30,27 +31,7 @@ export interface GeminiResponse {
     finishReason?: string;
     error?: string;
 }
-export interface ReviewFinding {
-    file: string;
-    line: number;
-    endLine?: number;
-    severity: 'error' | 'warning' | 'info';
-    message: string;
-    suggestion?: string;
-    ruleId?: string;
-    category?: string;
-}
-export interface ReviewResult {
-    findings: ReviewFinding[];
-    summary?: string;
-    metadata?: {
-        reviewedFiles: number;
-        reviewedLines: number;
-        totalIssues: number;
-        issuesBySeverity: Record<string, number>;
-    };
-}
-export declare class GeminiAdapter {
+export declare class GeminiAdapter implements LLMAdapter {
     private logger;
     private errorHandler;
     private tempDir;
@@ -59,7 +40,7 @@ export declare class GeminiAdapter {
     /**
      * Review code using Gemini
      */
-    reviewCode(context: ReviewContext, config: GeminiConfig): Promise<ReviewResult>;
+    reviewCode(context: ReviewContext, config: LLMConfig): Promise<ReviewResult>;
     /**
      * Call Gemini CLI with the given request
      */

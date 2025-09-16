@@ -98,6 +98,19 @@ export class ADOClient {
     logger: Logger,
     errorHandler: ErrorHandler
   ) {
+    // Validate required Azure DevOps PAT early to fail fast with a clear message
+    if (!personalAccessToken || personalAccessToken.trim().length === 0) {
+      // Throw a user error so CLI can present a helpful message
+      throw errorHandler.createUserError(
+        'Missing Azure DevOps PAT. Set AZURE_DEVOPS_PAT environment variable with a valid Personal Access Token.',
+        {
+          operation: 'initialize',
+          component: 'ADOClient',
+          metadata: { envVar: 'AZURE_DEVOPS_PAT' }
+        }
+      );
+    }
+
     this.organization = organization;
     this.project = project;
     this.repository = repository;

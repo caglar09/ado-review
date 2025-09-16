@@ -1,6 +1,6 @@
 import { Logger } from './logger';
 import { ErrorHandler } from './errorHandler';
-import { ReviewFinding, ReviewResult } from './geminiAdapter';
+import { ReviewFinding, ReviewResult } from './llm/types';
 
 export interface ADOComment {
   id?: number;

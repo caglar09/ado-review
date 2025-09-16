@@ -12,6 +12,7 @@ export interface ReviewOptions {
     exclude: string[];
     files: string[];
     allFiles: boolean;
+    provider: 'gemini-api' | 'openai' | 'openrouter';
     model: string;
     maxContextTokens: number;
     ratelimitBatch: number;
@@ -72,6 +73,7 @@ export declare class ArgsParser {
      * Get valid models from defaults.yaml configuration
      */
     private getValidModelsFromConfig;
-    private getDefaultModelFromConfig;
+    private getDefaultModelForProvider;
+    private getDefaultProviderFromConfig;
 }
 //# sourceMappingURL=argsParser.d.ts.map

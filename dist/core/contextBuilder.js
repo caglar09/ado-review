@@ -53,6 +53,30 @@ class ContextBuilder {
         }
     }
     /**
+     * Build a ReviewContext from an existing base (guidelines + rules) and a set of hunks
+     * Useful for batched reviews to avoid rebuilding rules/guidelines every time.
+     */
+    buildContextForHunks(base, hunks, options = {}) {
+        const { compactFormat = true } = options;
+        const diffs = this.buildDiffsSection(hunks, compactFormat);
+        const metadata = {
+            totalFiles: new Set(hunks.map(h => h.filePath)).size,
+            totalHunks: hunks.length,
+            totalLines: hunks.reduce((sum, hunk) => sum + hunk.newLineCount, 0),
+            // Rule/guideline counts are not known from base; set to 0 to avoid confusion in batch logs
+            ruleCount: 0,
+            guidelineCount: 0
+        };
+        const context = {
+            projectGuidelines: base.projectGuidelines,
+            reviewRules: base.reviewRules,
+            diffs,
+            ...(base.customPromptTemplate && { customPromptTemplate: base.customPromptTemplate }),
+            metadata
+        };
+        return context;
+    }
+    /**
      * Convert context to LLM prompt
      */
     toPrompt(context, options = {}) {

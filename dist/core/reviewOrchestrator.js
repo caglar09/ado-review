@@ -14,12 +14,15 @@ const diffFetcher_1 = require("./diffFetcher");
 const rulesLoader_1 = require("./rulesLoader");
 const contextBuilder_1 = require("./contextBuilder");
 const reviewPlanner_1 = require("./reviewPlanner");
-const geminiAdapter_1 = require("./geminiAdapter");
+const geminiApiAdapter_1 = require("./llm/geminiApiAdapter");
+const openaiAdapter_1 = require("./llm/openaiAdapter");
+const openRouterAdapter_1 = require("./llm/openRouterAdapter");
 const resultMapper_1 = require("./resultMapper");
 const commenter_1 = require("./commenter");
 const statusReporter_1 = require("./statusReporter");
 const workspace_1 = require("./workspace");
 const chalk_1 = __importDefault(require("chalk"));
+// ReviewFinding is imported from LLM types
 class ReviewOrchestrator {
     logger;
     errorHandler;
@@ -33,7 +36,7 @@ class ReviewOrchestrator {
     rulesLoader;
     contextBuilder;
     reviewPlanner;
-    geminiAdapter;
+    llmAdapter;
     resultMapper;
     commenter;
     statusReporter;
@@ -115,19 +118,27 @@ class ReviewOrchestrator {
         }
         catch (error) {
             const processingTime = Date.now() - startTime;
-            this.logger.error('Error occurred during review process:', {
-                errorMessage: error.message,
-                errorStack: error.stack,
-                processingTime
-            });
+            const err = error;
+            // Log a clear, human-readable error line
+            this.logger.error(`Error occurred during review process: ${err.message}`);
+            // Provide stack trace in debug logs
+            if (err.stack) {
+                this.logger.debug('Stack trace:', err.stack);
+            }
             if (error instanceof errorHandler_1.ReviewError) {
-                return {
+                const result = {
                     hasErrors: true,
                     hasFindings: false,
                     findingsCount: 0,
                     commentsPosted: 0,
-                    processingTime
+                    processingTime,
+                    errorMessage: err.message,
+                    errorType: error.constructor.name
                 };
+                if (err.stack) {
+                    result.errorStack = err.stack;
+                }
+                return result;
             }
             throw error;
         }
@@ -195,17 +206,34 @@ class ReviewOrchestrator {
             this.rulesLoader = new rulesLoader_1.RulesLoader(this.logger, this.errorHandler);
             this.contextBuilder = new contextBuilder_1.ContextBuilder(this.logger, this.errorHandler);
             this.reviewPlanner = new reviewPlanner_1.ReviewPlanner(this.logger, this.errorHandler);
-            // GeminiAdapter - now with timeout from config
-            const geminiConfig = await this.configLoader.getGeminiConfig();
-            this.logger.debug(`Initializing GeminiAdapter with timeout: ${geminiConfig.timeout}ms`);
-            this.geminiAdapter = new geminiAdapter_1.GeminiAdapter(this.logger, this.errorHandler, geminiConfig.timeout);
+            // Initialize LLM adapter based on provider
+            const appConfig = await this.configLoader.getConfig();
+            const defaultLlmTimeout = appConfig.errors?.timeouts?.llm ?? 120000;
+            const provider = this.options.provider || 'gemini-api';
+            this.logger.debug(`Initializing LLM adapter for provider: ${provider}`);
+            switch (provider) {
+                case 'gemini-api': {
+                    this.llmAdapter = new geminiApiAdapter_1.GeminiApiAdapter(this.logger, this.errorHandler, defaultLlmTimeout);
+                    break;
+                }
+                case 'openai': {
+                    this.llmAdapter = new openaiAdapter_1.OpenAIAdapter(this.logger, this.errorHandler, defaultLlmTimeout);
+                    break;
+                }
+                case 'openrouter': {
+                    this.llmAdapter = new openRouterAdapter_1.OpenRouterAdapter(this.logger, this.errorHandler, defaultLlmTimeout);
+                    break;
+                }
+                default:
+                    throw new Error(`Unsupported provider: ${provider}`);
+            }
             this.resultMapper = new resultMapper_1.ResultMapper(this.logger, this.errorHandler);
             this.commenter = new commenter_1.Commenter(this.logger, this.errorHandler, this.adoClient);
             this.statusReporter = new statusReporter_1.StatusReporter(this.logger, this.errorHandler, this.adoClient);
             this.logger.debug('All components initialized successfully');
         }
         catch (error) {
-            throw this.errorHandler.createInternalError('Failed to initialize review orchestrator', { operation: 'initialize' }, error instanceof Error ? error : undefined);
+            throw this.errorHandler.createInternalError(error.message ?? 'Failed to initialize review orchestrator', { operation: 'initialize' }, error instanceof Error ? error : undefined);
         }
     }
     /**
@@ -261,6 +289,7 @@ class ReviewOrchestrator {
         if (!this.diffFetcher || !this.gitManager || !this.workspace) {
             throw this.errorHandler.createInternalError('Required components not initialized');
         }
+        console.log("prInfo", prInfo);
         this.logger.debug('fetchDiffs - prInfo structure:', {
             hasRepository: !!prInfo.repository,
             hasPullRequestId: !!prInfo.pullRequestId,
@@ -366,10 +395,10 @@ class ReviewOrchestrator {
      * Execute AI review with batch processing and rate limiting
      */
     async executeReview(reviewPlan, context) {
-        if (!this.geminiAdapter) {
+        if (!this.llmAdapter) {
             throw this.errorHandler.createInternalError('Review components not initialized');
         }
-        this.logger.debug('Executing Gemini review with plan', {
+        this.logger.debug('Executing AI review with plan', {
             strategy: reviewPlan.strategy,
             batchCount: reviewPlan.batches?.length || 0,
             totalHunks: reviewPlan.totalHunks,
@@ -387,7 +416,7 @@ class ReviewOrchestrator {
      */
     async executeSingleReview(context) {
         this.logger.info('Executing single batch review');
-        const reviewResult = await this.geminiAdapter.reviewCode(context, {
+        const reviewResult = await this.llmAdapter.reviewCode(context, {
             model: this.options.model,
             maxTokens: this.options.maxContextTokens,
             temperature: 0.1
@@ -412,7 +441,7 @@ class ReviewOrchestrator {
                 // Create batch-specific context
                 const batchContext = this.createBatchContext(baseContext, batch);
                 // Execute review for this batch
-                const batchResult = await this.geminiAdapter.reviewCode(batchContext, {
+                const batchResult = await this.llmAdapter.reviewCode(batchContext, {
                     model: this.options.model,
                     maxTokens: Math.min(batch.estimatedTokens * 1.2, this.options.maxContextTokens),
                     temperature: 0.1
@@ -467,7 +496,7 @@ class ReviewOrchestrator {
                 const reducedBatch = this.createReducedBatch(batch);
                 const batchContext = this.createBatchContext(baseContext, reducedBatch);
                 this.logger.info(`Retrying batch ${batchNumber}/${totalBatches} with reduced context`);
-                const batchResult = await this.geminiAdapter.reviewCode(batchContext, {
+                const batchResult = await this.llmAdapter.reviewCode(batchContext, {
                     model: this.options.model,
                     maxTokens: Math.min(reducedBatch.estimatedTokens * 1.1, this.options.maxContextTokens * 0.8),
                     temperature: 0.1
@@ -495,7 +524,7 @@ class ReviewOrchestrator {
         try {
             const simplifiedBatch = this.createSimplifiedBatch(batch);
             const batchContext = this.createBatchContext(baseContext, simplifiedBatch);
-            const batchResult = await this.geminiAdapter.reviewCode(batchContext, {
+            const batchResult = await this.llmAdapter.reviewCode(batchContext, {
                 model: this.options.model,
                 maxTokens: Math.min(simplifiedBatch.estimatedTokens, this.options.maxContextTokens * 0.6),
                 temperature: 0.2 // Slightly higher temperature for robustness
@@ -524,7 +553,7 @@ class ReviewOrchestrator {
             try {
                 await this.sleep(3000); // Extra delay for sub-batches
                 const subBatchContext = this.createBatchContext(baseContext, subBatches[j]);
-                const subBatchResult = await this.geminiAdapter.reviewCode(subBatchContext, {
+                const subBatchResult = await this.llmAdapter.reviewCode(subBatchContext, {
                     model: this.options.model,
                     maxTokens: Math.min(subBatches[j].estimatedTokens, this.options.maxContextTokens * 0.5),
                     temperature: 0.1
@@ -557,14 +586,24 @@ class ReviewOrchestrator {
      * Create context for a specific batch
      */
     createBatchContext(baseContext, batch) {
+        if (!this.contextBuilder) {
+            throw this.errorHandler.createInternalError('Context builder not initialized');
+        }
+        // Build a context specific to this batch using existing guidelines/rules as base
+        const base = {
+            projectGuidelines: baseContext.projectGuidelines,
+            reviewRules: baseContext.reviewRules,
+            customPromptTemplate: baseContext.customPromptTemplate
+        };
+        const context = this.contextBuilder.buildContextForHunks(base, batch.hunks, { compactFormat: true });
+        // Attach batch info for logging/diagnostics (not used by adapters)
         return {
-            ...baseContext,
-            diffHunks: batch.hunks,
-            files: batch.files,
+            ...context,
             batchInfo: {
                 id: batch.id,
                 priority: batch.priority,
-                estimatedTokens: batch.estimatedTokens
+                estimatedTokens: batch.estimatedTokens,
+                files: batch.files
             }
         };
     }

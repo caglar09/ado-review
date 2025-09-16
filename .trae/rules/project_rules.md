@@ -2,7 +2,7 @@
 
 ## 1. Ürün Tanımı
 
-**ADO Review CLI**, Azure DevOps API ve Gemini CLI (LLM) kullanarak **Pull Request’leri** otomatik inceleyen, önceden tanımlanmış kurallar + proje kuralları + proje yapısı bilgilerini LLM bağlamına entegre ederek **satır-bazlı yorumlar** üreten profesyonel bir CLI aracıdır.
+**ADO Review CLI**, Azure DevOps API ve çoklu LLM sağlayıcıları (Gemini CLI/API, OpenAI, OpenRouter) kullanarak **Pull Request’leri** otomatik inceleyen, önceden tanımlanmış kurallar + proje kuralları + proje yapısı bilgilerini LLM bağlamına entegre ederek **satır-bazlı yorumlar** üreten profesyonel bir CLI aracıdır.
 
 Bu araç, **AI Agent** tarafından geliştirilecek olup; hem **teknik doğrulama** hem **kurumsal kod standartları** hem de **proje bağlamı** üzerinden inceleme yapar.  
 Kullanıcıya **ön onay süreci** sunar ve sadece seçilen bulgular Azure DevOps PR üzerinde yorum olarak paylaşılır.
@@ -39,8 +39,8 @@ Kullanıcıya **ön onay süreci** sunar ve sadece seçilen bulgular Azure DevOp
 6. **Review Stratejisi**  
    - Toplu veya tekil batch review (heuristic)  
    - Yalnız diff edilmiş hunk’lar LLM’e gönderilir.
-7. **Model Seçimi**  
-   - Kullanıcı `--model <name>` ile Gemini modelini belirler.
+7. **Sağlayıcı & Model Seçimi**  
+   - Kullanıcı `--provider <gemini-cli|gemini-api|openai|openrouter>` ile sağlayıcıyı ve `--model <name>` ile modeli belirler.
 8. **Dosya Seçimi & Filtreleme**  
    - `--include`, `--exclude`, `--files`, `--all-files`
 9. **Onay Süreci**  
@@ -81,7 +81,7 @@ Kullanıcıya **ön onay süreci** sunar ve sadece seçilen bulgular Azure DevOp
 7. Heuristic ile batch planı yapılır:
    - Küçük PR → toplu review
    - Büyük PR → parça parça review
-8. Gemini CLI çağrıları yapılır; bulgular JSON formatında toplanır.
+8. Seçilen LLM sağlayıcısına (varsayılan: Gemini API) çağrılar yapılır; bulgular JSON formatında toplanır.
 9. Kullanıcıya terminalde detaylı bulgular gösterilir.
 10. **İnteraktif Onay Süreci**:
     - Bulgular özeti gösterilir (toplam, severity dağılımı)
@@ -115,7 +115,11 @@ ado-review-cli/
 │   │   ├── rulesLoader.ts   # 🔄 YAML/JSON + MD birleştirme
 │   │   ├── contextBuilder.ts # 🔄 Rules + project rules + MD + diff → LLM prompt
 │   │   ├── reviewPlanner.ts # 🔄 Batch/tekil planlama
-│   │   ├── geminiAdapter.ts # 🔄 Gemini CLI wrapper
+│   │   └── llm/                  # ✅ Çoklu LLM sağlayıcıları
+│   │       ├── types.ts          #   Ortak tipler (findings/result/config)
+│   │       ├── geminiApiAdapter.ts  #   Gemini API adapter
+│   │       ├── openaiAdapter.ts      #   OpenAI adapter
+│   │       └── openRouterAdapter.ts  #   OpenRouter adapter
 │   │   ├── resultMapper.ts  # 🔄 Findings → ADO comment mapping
 │   │   ├── commenter.ts     # 🔄 Yorum gönderici
 │   │   ├── statusReporter.ts # 🔄 PR status yönetimi
@@ -262,7 +266,8 @@ ${context.diffs}
 - `--rules <glob|path>` (çoklu)
 - `--project-rules <path>`
 - `--include <glob>` / `--exclude <glob>` / `--files <list>` / `--all-files`
-- `--model <gemini-model>`
+- `--provider <gemini-cli|gemini-api|openai|openrouter>`
+- `--model <name>`
 - `--max-context-tokens <n>`
 - `--ratelimit-batch <n>` / `--ratelimit-sleep-ms <ms>`
 - `--tmp-dir <path>` / `--keep-workdir`
@@ -270,14 +275,14 @@ ${context.diffs}
 - `--auto-approve`
 - `--dry-run`
 - `--format <table|json>`
-- `--severity-threshold <info|warn|error>`
+- `--severity-threshold <info|warning|error>`
 
 ---
 
 ## 8. Hata Yönetimi
 
 - Kullanıcı hataları → exit code `3`
-- API hataları (ADO/Gemini) → retry/backoff, kod `4`
+- API hataları (ADO/LLM) → retry/backoff, kod `4`
 - İç hata → kod `5`
 - Çıkış kodu `2` = bulgular var, eşik üstü
 
@@ -365,7 +370,8 @@ ${context.diffs}
    - `core/workspace.ts`: Temp workspace yönetimi
 
 3. **AI Integration** 🔄
-   - `core/geminiAdapter.ts`: Gemini API entegrasyonu
+   - `core/geminiAdapter.ts`: Gemini CLI entegrasyonu
+   - `core/llm/`: Çoklu LLM sağlayıcı adapter’ları (Gemini API, OpenAI, OpenRouter) ve ortak tipler
    - `core/contextBuilder.ts`: LLM context oluşturma
    - `core/reviewPlanner.ts`: Batch planlama
    - `core/resultMapper.ts`: Sonuç mapping
@@ -479,7 +485,12 @@ When working with workspace operations:
 ### Environment Variables
 
 - `ADO_REVIEW_LOG_LEVEL`: Controls logging level (error, warn, info, debug)
-- Other environment variables as documented in README.md
+- LLM Sağlayıcı Anahtarları:
+  - `GEMINI_API_KEY` (Gemini API kullanılıyorsa)
+  - `OPENAI_API_KEY` (OpenAI kullanılıyorsa)
+  - `OPENROUTER_API_KEY` (OpenRouter kullanılıyorsa)
+  - `OPENROUTER_REFERER`, `OPENROUTER_TITLE` (OpenRouter için opsiyonel)
+- Diğer değişkenler README.md’de belgelidir
 
 ### Logging
 

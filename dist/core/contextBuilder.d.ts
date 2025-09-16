@@ -39,6 +39,17 @@ export declare class ContextBuilder {
      */
     buildContext(loadedRules: LoadedRules, diffHunks: DiffHunk[], options?: ContextOptions): ReviewContext;
     /**
+     * Build a ReviewContext from an existing base (guidelines + rules) and a set of hunks
+     * Useful for batched reviews to avoid rebuilding rules/guidelines every time.
+     */
+    buildContextForHunks(base: {
+        projectGuidelines: string;
+        reviewRules: string;
+        customPromptTemplate?: string;
+    }, hunks: DiffHunk[], options?: {
+        compactFormat?: boolean;
+    }): ReviewContext;
+    /**
      * Convert context to LLM prompt
      */
     toPrompt(context: ReviewContext, options?: ContextOptions): string;

@@ -11,6 +11,8 @@
     "copy-config": "mkdir -p dist/config && cp src/config/*.yaml dist/config/",
     "dev": "ts-node src/cli/index.ts",
     "start": "node dist/cli/index.js",
+    "review": "node dist/cli/index.js review",
+    "dev:review": "ts-node src/cli/index.ts review",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",

@@ -51,13 +51,36 @@ gemini:
   topP: 0.8
   # Default top-k for responses
   topK: 40
-  # Default timeout for Gemini CLI calls (in milliseconds)
+  # Default timeout for Gemini requests (in milliseconds)
   timeout: 120000
   # Retry configuration for API failures
   retryAttempts: 5
   retryDelay: 2000
   maxBackoffDelay: 60000
   enableRateLimitHandling: true
+
+# OpenAI LLM Configuration
+openai:
+  defaultModel: "gpt-4o-mini"
+  availableModels:
+    - "gpt-4o-mini"
+    - "gpt-4o"
+    - "gpt-4.1-mini"
+  timeout: 120000
+
+# OpenRouter LLM Configuration
+openrouter:
+  defaultModel: "openai/gpt-4o-mini"
+  availableModels:
+    - "openai/gpt-4o-mini"
+    - "anthropic/claude-3.5-sonnet"
+    - "google/gemini-2.0-flash-lite-preview-02-05"
+  timeout: 120000
+  baseUrl: "https://openrouter.ai/api/v1"
+
+# Global LLM settings
+llm:
+  defaultProvider: "gemini-api"
 
 # Rate Limiting Configuration
 rateLimit:

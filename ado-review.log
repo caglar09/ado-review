@@ -1,0 +1,72 @@
+{"timestamp":"2025-09-16T11:27:32.448Z","level":"info","message":"\u001b[34m🚀 Starting Azure DevOps PR Review...\u001b[39m"}
+{"timestamp":"2025-09-16T11:27:32.449Z","level":"debug","message":"Default config path: /Users/caglar/Desktop/ado-review/dist/config/defaults.yaml"}
+{"timestamp":"2025-09-16T11:27:32.449Z","level":"debug","message":"User config path: /Users/caglar/Desktop/ado-review/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:32.449Z","level":"info","message":"\u001b[34m[1/8]\u001b[39m Initializing and validating options..."}
+{"timestamp":"2025-09-16T11:27:32.449Z","level":"debug","message":"Starting step 1: Initialize"}
+{"timestamp":"2025-09-16T11:27:32.450Z","level":"info","message":"Loading configuration..."}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"debug","message":"Found .adorevrc.yaml in project root, loading configuration"}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"debug","message":"Project root configuration loaded successfully"}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"info","message":"Using configuration from: project-root"}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"debug","message":"Configuration loaded and merged successfully"}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"debug","message":"Gemini timeout: 120000ms"}
+{"timestamp":"2025-09-16T11:27:32.451Z","level":"debug","message":"Current log level: debug"}
+{"timestamp":"2025-09-16T11:27:32.452Z","level":"debug","message":"Initializing LLM adapter for provider: openai"}
+{"timestamp":"2025-09-16T11:27:32.452Z","level":"debug","message":"All components initialized successfully"}
+{"timestamp":"2025-09-16T11:27:32.452Z","level":"debug","message":"Completed step 1: Initialize"}
+{"timestamp":"2025-09-16T11:27:32.453Z","level":"info","message":"\u001b[34m[2/8]\u001b[39m Setting up temporary workspace..."}
+{"timestamp":"2025-09-16T11:27:32.453Z","level":"debug","message":"Starting step 2: Setup workspace"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"info","message":"Workspace created: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022052453-gurtbs"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"debug","message":"Workspace config path: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022052453-gurtbs/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"debug","message":"Default config path: /Users/caglar/Desktop/ado-review/dist/config/defaults.yaml"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"debug","message":"User config path: /Users/caglar/Desktop/ado-review/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"debug","message":"Completed step 2: Setup workspace"}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"info","message":"\u001b[34m[3/8]\u001b[39m Fetching PR information and changes..."}
+{"timestamp":"2025-09-16T11:27:32.457Z","level":"debug","message":"Starting step 3: Fetch PR info and diffs"}
+{"timestamp":"2025-09-16T11:27:32.458Z","level":"debug","message":"Fetching PR 19217 info"}
+{"timestamp":"2025-09-16T11:27:32.458Z","level":"debug","message":"Making GET request to https://dev.azure.com/inploid/AuditReactProject/_apis/git/repositories/AuditReactProject.RN0.71.X/pullrequests/19217"}
+{"timestamp":"2025-09-16T11:27:33.842Z","level":"debug","message":"Received 203 response from https://dev.azure.com/inploid/AuditReactProject/_apis/git/repositories/AuditReactProject.RN0.71.X/pullrequests/19217"}
+{"timestamp":"2025-09-16T11:27:33.842Z","level":"debug","message":"Successfully fetched PR 19217 info"}
+{"timestamp":"2025-09-16T11:27:33.842Z","level":"debug","message":"Response status: 203"}
+{"timestamp":"2025-09-16T11:27:33.857Z","level":"debug","message":"Response data keys:"}
+{"timestamp":"2025-09-16T11:27:33.862Z","level":"debug","message":"PR Info structure:"}
+{"timestamp":"2025-09-16T11:27:33.862Z","level":"debug","message":"Completed fetchPRInfo"}
+{"timestamp":"2025-09-16T11:27:33.865Z","level":"debug","message":"fetchDiffs - prInfo structure:"}
+{"timestamp":"2025-09-16T11:27:33.867Z","level":"error","message":"Error occurred during review process:"}
+{"timestamp":"2025-09-16T11:27:33.867Z","level":"info","message":"Cleaning up workspace: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022052453-gurtbs"}
+{"timestamp":"2025-09-16T11:27:33.870Z","level":"info","message":"Workspace cleanup completed: 0 files, 5 directories deleted"}
+{"timestamp":"2025-09-16T11:27:55.408Z","level":"info","message":"\u001b[34m🚀 Starting Azure DevOps PR Review...\u001b[39m"}
+{"timestamp":"2025-09-16T11:27:55.408Z","level":"debug","message":"Default config path: /Users/caglar/Desktop/ado-review/dist/config/defaults.yaml"}
+{"timestamp":"2025-09-16T11:27:55.408Z","level":"debug","message":"User config path: /Users/caglar/Desktop/ado-review/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:55.409Z","level":"info","message":"\u001b[34m[1/8]\u001b[39m Initializing and validating options..."}
+{"timestamp":"2025-09-16T11:27:55.409Z","level":"debug","message":"Starting step 1: Initialize"}
+{"timestamp":"2025-09-16T11:27:55.409Z","level":"info","message":"Loading configuration..."}
+{"timestamp":"2025-09-16T11:27:55.410Z","level":"debug","message":"Found .adorevrc.yaml in project root, loading configuration"}
+{"timestamp":"2025-09-16T11:27:55.410Z","level":"debug","message":"Project root configuration loaded successfully"}
+{"timestamp":"2025-09-16T11:27:55.411Z","level":"info","message":"Using configuration from: project-root"}
+{"timestamp":"2025-09-16T11:27:55.411Z","level":"debug","message":"Configuration loaded and merged successfully"}
+{"timestamp":"2025-09-16T11:27:55.411Z","level":"debug","message":"Gemini timeout: 120000ms"}
+{"timestamp":"2025-09-16T11:27:55.411Z","level":"debug","message":"Current log level: debug"}
+{"timestamp":"2025-09-16T11:27:55.411Z","level":"debug","message":"Initializing LLM adapter for provider: openai"}
+{"timestamp":"2025-09-16T11:27:55.412Z","level":"debug","message":"All components initialized successfully"}
+{"timestamp":"2025-09-16T11:27:55.412Z","level":"debug","message":"Completed step 1: Initialize"}
+{"timestamp":"2025-09-16T11:27:55.412Z","level":"info","message":"\u001b[34m[2/8]\u001b[39m Setting up temporary workspace..."}
+{"timestamp":"2025-09-16T11:27:55.412Z","level":"debug","message":"Starting step 2: Setup workspace"}
+{"timestamp":"2025-09-16T11:27:55.415Z","level":"info","message":"Workspace created: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022075412-t3fmbc"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"Workspace config path: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022075412-t3fmbc/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"Default config path: /Users/caglar/Desktop/ado-review/dist/config/defaults.yaml"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"User config path: /Users/caglar/Desktop/ado-review/.adorevrc.yaml"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"Completed step 2: Setup workspace"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"info","message":"\u001b[34m[3/8]\u001b[39m Fetching PR information and changes..."}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"Starting step 3: Fetch PR info and diffs"}
+{"timestamp":"2025-09-16T11:27:55.416Z","level":"debug","message":"Fetching PR 19217 info"}
+{"timestamp":"2025-09-16T11:27:55.417Z","level":"debug","message":"Making GET request to https://dev.azure.com/inploid/AuditReactProject/_apis/git/repositories/AuditReactProject.RN0.71.X/pullrequests/19217"}
+{"timestamp":"2025-09-16T11:27:56.462Z","level":"debug","message":"Received 203 response from https://dev.azure.com/inploid/AuditReactProject/_apis/git/repositories/AuditReactProject.RN0.71.X/pullrequests/19217"}
+{"timestamp":"2025-09-16T11:27:56.462Z","level":"debug","message":"Successfully fetched PR 19217 info"}
+{"timestamp":"2025-09-16T11:27:56.462Z","level":"debug","message":"Response status: 203"}
+{"timestamp":"2025-09-16T11:27:56.477Z","level":"debug","message":"Response data keys:"}
+{"timestamp":"2025-09-16T11:27:56.482Z","level":"debug","message":"PR Info structure:"}
+{"timestamp":"2025-09-16T11:27:56.483Z","level":"debug","message":"Completed fetchPRInfo"}
+{"timestamp":"2025-09-16T11:27:56.485Z","level":"debug","message":"fetchDiffs - prInfo structure:"}
+{"timestamp":"2025-09-16T11:27:56.487Z","level":"error","message":"Error occurred during review process:"}
+{"timestamp":"2025-09-16T11:27:56.488Z","level":"info","message":"Cleaning up workspace: /var/folders/hl/9z317kz51qb0yg2b93bz3d680000gn/T/ado-review-1758022075412-t3fmbc"}
+{"timestamp":"2025-09-16T11:27:56.490Z","level":"info","message":"Workspace cleanup completed: 0 files, 5 directories deleted"}

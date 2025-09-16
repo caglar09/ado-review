@@ -51,17 +51,32 @@ const program = new commander_1.Command();
 const logger = new logger_js_1.Logger();
 const errorHandler = new errorHandler_js_1.ErrorHandler(logger);
 const configLoader = new configLoader_js_1.ConfigLoader(logger, errorHandler);
-// Function to get default model from config
+// Functions to get defaults from config
+function getDefaultProviderFromConfig() {
+    try {
+        const configPath = (0, path_1.join)(__dirname, '..', 'config', 'defaults.yaml');
+        const configContent = (0, fs_1.readFileSync)(configPath, 'utf8');
+        const config = yaml.load(configContent);
+        if (config?.llm?.defaultProvider && ['gemini-api', 'openai', 'openrouter'].includes(config.llm.defaultProvider)) {
+            return config.llm.defaultProvider;
+        }
+    }
+    catch { }
+    return 'gemini-api';
+}
 function getDefaultModelFromConfig() {
     try {
         const configPath = (0, path_1.join)(__dirname, '..', 'config', 'defaults.yaml');
         const configContent = (0, fs_1.readFileSync)(configPath, 'utf8');
         const config = yaml.load(configContent);
-        if (config?.gemini?.defaultModel && typeof config.gemini.defaultModel === 'string') {
-            return config.gemini.defaultModel;
+        const provider = config?.llm?.defaultProvider || 'gemini-api';
+        if (provider === 'openai') {
+            return config?.openai?.defaultModel || 'gpt-4o-mini';
         }
-        // Fallback to hardcoded default if config is not available
-        return 'gemini-pro';
+        if (provider === 'openrouter') {
+            return config?.openrouter?.defaultModel || 'openai/gpt-4o-mini';
+        }
+        return config?.gemini?.defaultModel || 'gemini-pro';
     }
     catch (error) {
         return 'gemini-pro';
@@ -91,7 +106,8 @@ program
     .option('--exclude <patterns...>', 'File patterns to exclude', [])
     .option('--files <files...>', 'Specific files to review', [])
     .option('--all-files', 'Review all files (not just changed ones)', false)
-    .option('--model <name>', 'Gemini model to use', getDefaultModelFromConfig())
+    .option('--provider <name>', 'LLM provider (gemini-api|openai|openrouter)', getDefaultProviderFromConfig())
+    .option('--model <name>', 'Model to use for selected provider', getDefaultModelFromConfig())
     .option('--max-context-tokens <number>', 'Maximum context tokens for LLM', parseInt, 32000)
     .option('--ratelimit-batch <number>', 'Batch size for rate limiting', parseInt, 5)
     .option('--ratelimit-sleep-ms <number>', 'Sleep time between batches (ms)', parseInt, 1000)
@@ -148,7 +164,15 @@ program
         const result = await orchestrator.run();
         // Handle exit codes based on results
         if (result.hasErrors) {
-            logger.error(chalk_1.default.red('❌ Review completed with errors'));
+            if (result.errorMessage) {
+                configuredLogger.error(chalk_1.default.red(`❌ ${result.errorMessage}`));
+                if (options.verbose && result.errorStack) {
+                    configuredLogger.debug(result.errorStack);
+                }
+            }
+            else {
+                configuredLogger.error(chalk_1.default.red('❌ Review completed with errors'));
+            }
             process.exit(2);
         }
         else if (result.hasFindings && options.severityThreshold !== 'info') {
@@ -167,7 +191,7 @@ program
 // Config command for setup
 program
     .command('config')
-    .description('Configure Azure DevOps and Gemini CLI settings')
+    .description('Configure Azure DevOps and LLM settings')
     .option('--show', 'Show current configuration', false)
     .option('--set <key=value>', 'Set configuration value')
     .action(async (options) => {

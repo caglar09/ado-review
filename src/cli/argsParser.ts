@@ -24,6 +24,7 @@ export interface ReviewOptions {
   allFiles: boolean;
   
   // LLM configuration
+  provider: 'gemini-api' | 'openai' | 'openrouter';
   model: string;
   maxContextTokens: number;
   
@@ -64,6 +65,7 @@ export class ArgsParser {
    * Parse and validate CLI options
    */
   public async parseOptions(options: any): Promise<ReviewOptions> {
+    const provider = options.provider || this.getDefaultProviderFromConfig();
     const parsed: ReviewOptions = {
       // PR identification
       prUrl: options.prUrl,
@@ -84,7 +86,8 @@ export class ArgsParser {
       allFiles: options.allFiles || false,
       
       // LLM configuration
-      model: options.model || this.getDefaultModelFromConfig(),
+      provider,
+      model: options.model || this.getDefaultModelForProvider(provider),
       maxContextTokens: options.maxContextTokens || 32000,
       
       // Rate limiting
@@ -240,10 +243,29 @@ export class ArgsParser {
       throw new Error('Cannot use both --files and --all-files options together');
     }
 
-    // Validate Gemini model name
-    const validModels = this.getValidModelsFromConfig();
-    if (!validModels.includes(options.model)) {
-      this.logger.warn(`Unknown Gemini model: ${options.model}. Supported models: ${validModels.join(', ')}`);
+    // Validate provider and model
+    const validProviders = ['gemini-api', 'openai', 'openrouter'];
+    if (!validProviders.includes(options.provider)) {
+      throw new Error(`Invalid provider: ${options.provider}. Supported providers: ${validProviders.join(', ')}`);
+    }
+
+    // Provider specific validation
+    if (options.provider === 'gemini-api') {
+      const validModels = this.getValidModelsFromConfig('gemini');
+      if (!validModels.includes(options.model)) {
+        this.logger.warn(`Unknown Gemini model: ${options.model}. Supported models: ${validModels.join(', ')}`);
+      }
+      if (options.provider === 'gemini-api' && !process.env['GEMINI_API_KEY']) {
+        this.logger.warn('GEMINI_API_KEY is not set; Gemini API requests will fail');
+      }
+    } else if (options.provider === 'openai') {
+      if (!process.env['OPENAI_API_KEY']) {
+        this.logger.warn('OPENAI_API_KEY is not set; OpenAI requests will fail');
+      }
+    } else if (options.provider === 'openrouter') {
+      if (!process.env['OPENROUTER_API_KEY']) {
+        this.logger.warn('OPENROUTER_API_KEY is not set; OpenRouter requests will fail');
+      }
     }
   }
 
@@ -336,41 +358,81 @@ export class ArgsParser {
   /**
    * Get valid models from defaults.yaml configuration
    */
-  private getValidModelsFromConfig(): string[] {
+  private getValidModelsFromConfig(provider: 'gemini' | 'openai' | 'openrouter' = 'gemini'): string[] {
     try {
       const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
       const configContent = fs.readFileSync(configPath, 'utf8');
       const config = yaml.load(configContent) as any;
       
-      if (config?.gemini?.availableModels && Array.isArray(config.gemini.availableModels)) {
-        return config.gemini.availableModels;
+      if (provider === 'gemini') {
+        if (config?.gemini?.availableModels && Array.isArray(config.gemini.availableModels)) {
+          return config.gemini.availableModels;
+        }
+        this.logger.warn('Could not load available models from config, using fallback list');
+        return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+      } else if (provider === 'openai') {
+        if (config?.openai?.availableModels && Array.isArray(config.openai.availableModels)) {
+          return config.openai.availableModels;
+        }
+        this.logger.warn('Could not load available OpenAI models from config');
+        return [];
+      } else {
+        if (config?.openrouter?.availableModels && Array.isArray(config.openrouter.availableModels)) {
+          return config.openrouter.availableModels;
+        }
+        this.logger.warn('Could not load available OpenRouter models from config');
+        return [];
       }
-      
-      // Fallback to hardcoded list if config is not available
-      this.logger.warn('Could not load available models from config, using fallback list');
-      return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
     } catch (error) {
       this.logger.warn(`Error loading config file: ${error}. Using fallback model list.`);
-      return ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+      return provider === 'gemini' 
+        ? ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash']
+        : [];
     }
   }
 
-  private getDefaultModelFromConfig(): string {
+  private getDefaultModelForProvider(provider: 'gemini-api' | 'openai' | 'openrouter'): string {
     try {
       const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
       const configContent = fs.readFileSync(configPath, 'utf8');
       const config = yaml.load(configContent) as any;
       
-      if (config?.gemini?.defaultModel && typeof config.gemini.defaultModel === 'string') {
-        return config.gemini.defaultModel;
+      if (provider === 'openai') {
+        if (config?.openai?.defaultModel && typeof config.openai.defaultModel === 'string') {
+          return config.openai.defaultModel;
+        }
+        this.logger.warn('Could not load default OpenAI model from config, using fallback default');
+        return 'gpt-4o-mini';
+      } else if (provider === 'openrouter') {
+        if (config?.openrouter?.defaultModel && typeof config.openrouter.defaultModel === 'string') {
+          return config.openrouter.defaultModel;
+        }
+        this.logger.warn('Could not load default OpenRouter model from config, using fallback default');
+        return 'openai/gpt-4o-mini';
+      } else {
+        if (config?.gemini?.defaultModel && typeof config.gemini.defaultModel === 'string') {
+          return config.gemini.defaultModel;
+        }
+        this.logger.warn('Could not load default Gemini model from config, using fallback default');
+        return 'gemini-pro';
       }
-      
-      // Fallback to hardcoded default if config is not available
-      this.logger.warn('Could not load default model from config, using fallback default');
-      return 'gemini-pro';
     } catch (error) {
       this.logger.warn(`Error loading config file: ${error}. Using fallback default model.`);
+      if (provider === 'openai') return 'gpt-4o-mini';
+      if (provider === 'openrouter') return 'openai/gpt-4o-mini';
       return 'gemini-pro';
     }
+  }
+
+  private getDefaultProviderFromConfig(): 'gemini-api' | 'openai' | 'openrouter' {
+    try {
+      const configPath = path.join(__dirname, '..', 'config', 'defaults.yaml');
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = yaml.load(configContent) as any;
+      if (config?.llm?.defaultProvider && ['gemini-api','openai','openrouter'].includes(config.llm.defaultProvider)) {
+        return config.llm.defaultProvider;
+      }
+    } catch {}
+    return 'gemini-api';
   }
 }

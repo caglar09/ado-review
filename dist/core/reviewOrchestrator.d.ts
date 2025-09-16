@@ -5,16 +5,9 @@ export interface ReviewResult {
     findingsCount: number;
     commentsPosted: number;
     processingTime: number;
-}
-export interface ReviewFinding {
-    file: string;
-    line: number;
-    endLine?: number;
-    severity: 'info' | 'warning' | 'error';
-    message: string;
-    suggestion?: string;
-    ruleId?: string;
-    category?: string;
+    errorMessage?: string;
+    errorStack?: string;
+    errorType?: string;
 }
 export declare class ReviewOrchestrator {
     private logger;
@@ -28,7 +21,7 @@ export declare class ReviewOrchestrator {
     private rulesLoader?;
     private contextBuilder?;
     private reviewPlanner?;
-    private geminiAdapter?;
+    private llmAdapter?;
     private resultMapper?;
     private commenter?;
     private statusReporter?;

@@ -1,6 +1,11 @@
 # Example .adorevrc.yaml configuration file
 # Copy this file to .adorevrc.yaml in your project root and customize as needed
 
+# Global LLM settings
+llm:
+  # Default provider: gemini-api | openai | openrouter
+  defaultProvider: gemini-api
+
 # Gemini AI Configuration
 gemini:
   defaultModel: "gemini-1.5-pro-002"
@@ -8,6 +13,16 @@ gemini:
   topP: 0.95
   topK: 40
   timeout: 60000
+
+# OpenAI Configuration (optional)
+openai:
+  defaultModel: "gpt-4o-mini"
+  timeout: 120000
+
+# OpenRouter Configuration (optional)
+openrouter:
+  defaultModel: "openai/gpt-4o-mini"
+  timeout: 120000
 
 # Rate Limiting Configuration
 rateLimit:
