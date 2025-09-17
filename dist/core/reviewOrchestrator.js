@@ -289,7 +289,6 @@ class ReviewOrchestrator {
         if (!this.diffFetcher || !this.gitManager || !this.workspace) {
             throw this.errorHandler.createInternalError('Required components not initialized');
         }
-        console.log("prInfo", prInfo);
         this.logger.debug('fetchDiffs - prInfo structure:', {
             hasRepository: !!prInfo.repository,
             hasPullRequestId: !!prInfo.pullRequestId,
@@ -303,7 +302,8 @@ class ReviewOrchestrator {
         const sourceDir = this.workspace.getSubdirPath('source');
         await this.gitManager.cloneRepository(prInfo.repository.remoteUrl, {
             branch: prInfo.sourceRefName,
-            workingDirectory: sourceDir
+            workingDirectory: sourceDir,
+            additionalRefs: prInfo.targetRefName ? [prInfo.targetRefName] : []
         });
         // After cloning, reinitialize ConfigLoader to read .adorevrc.yaml from cloned workspace
         this.logger.debug('Reinitializing ConfigLoader with cloned workspace directory:', sourceDir);
@@ -327,7 +327,14 @@ class ReviewOrchestrator {
         if (!this.rulesLoader) {
             throw this.errorHandler.createInternalError('Rules loader not initialized');
         }
-        return await this.rulesLoader.loadRules(this.options.rules, this.options.projectRules);
+        // Merge CLI-provided rules with config-defined rules
+        const config = await this.configLoader.getConfig();
+        const configRules = (config?.review?.rules || []).filter(Boolean);
+        const configProjectRules = config?.review?.projectRules || undefined;
+        // Prefer CLI values but merge with config where useful
+        const mergedRules = Array.from(new Set([...configRules, ...this.options.rules]));
+        const projectRulesPath = this.options.projectRules || configProjectRules;
+        return await this.rulesLoader.loadRules(mergedRules, projectRulesPath);
     }
     /**
      * Build review context

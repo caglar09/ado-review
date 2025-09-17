@@ -54,6 +54,8 @@ export interface AppConfig {
     maxTableFindings: number;
     maxDiffLineLength: number;
     contextLines: number;
+    rules?: string[];
+    projectRules?: string | null;
   };
   files: {
     defaultInclude: string[];

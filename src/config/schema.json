@@ -260,6 +260,19 @@
           "minimum": 0,
           "maximum": 20,
           "description": "Context lines to include around changes"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Default rules paths (glob or file paths) to load for reviews"
+        },
+        "projectRules": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "Path to project-specific rules file"
         }
       },
       "additionalProperties": false

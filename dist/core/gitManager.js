@@ -80,6 +80,18 @@ class GitManager {
             // Clean branch name by removing 'refs/heads/' prefix if present
             const cleanBranchName = options.branch.replace(/^refs\/heads\//, '');
             this.executeGitCommand('checkout', ['-b', 'local-branch', `origin/${cleanBranchName}`], options.workingDirectory);
+            // Fetch additional refs (e.g., target branch) to ensure base commits are present for diffs
+            if (options.additionalRefs && options.additionalRefs.length > 0) {
+                for (const ref of options.additionalRefs) {
+                    try {
+                        this.executeGitCommand('fetch', ['origin', ref], options.workingDirectory);
+                    }
+                    catch (e) {
+                        // Non-fatal: continue; diffs may still work if commit is reachable via other refs
+                        this.logger.warn(`Failed to fetch additional ref ${ref}: ${e.message}`);
+                    }
+                }
+            }
             // Get commit ID
             const commitId = this.executeGitCommand('rev-parse', ['HEAD'], options.workingDirectory).trim();
             const gitInfo = {

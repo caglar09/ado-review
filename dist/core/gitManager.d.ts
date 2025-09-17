@@ -5,6 +5,7 @@ export interface CloneOptions {
     depth?: number;
     sparseCheckout?: string[];
     workingDirectory: string;
+    additionalRefs?: string[];
 }
 export interface GitInfo {
     repositoryUrl: string;

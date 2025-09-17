@@ -116,6 +116,10 @@ review:
   maxDiffLineLength: 200
   # Context lines to include around changes
   contextLines: 3
+  # Optional default rules (glob/file paths) to load when CLI --rules is not provided
+  rules: []
+  # Optional project-wide rules file path
+  projectRules: null
 
 # File Filtering Configuration
 files:

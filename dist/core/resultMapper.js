@@ -220,23 +220,20 @@ class ResultMapper {
         const parts = lineKey.includes('-') ? lineKey.split('-') : [lineKey, lineKey];
         const startLineStr = parts[0] || '1';
         const endLineStr = parts[1] || startLineStr;
-        const startLine = parseInt(startLineStr);
-        const endLine = parseInt(endLineStr);
+        let startLine = parseInt(startLineStr);
+        let endLine = parseInt(endLineStr);
         if (isNaN(startLine) || isNaN(endLine)) {
             this.logger.warn(`Invalid line key: ${lineKey}`);
             return null;
         }
+        // Azure DevOps requires 1-based line numbers
+        startLine = Math.max(1, startLine);
+        endLine = Math.max(startLine, endLine);
         // Create thread context
         const threadContext = {
             filePath: firstFinding.file || '',
-            rightFileStart: {
-                line: startLine,
-                offset: 1
-            },
-            rightFileEnd: {
-                line: endLine,
-                offset: 1
-            }
+            rightFileStart: { line: startLine, offset: 1 },
+            rightFileEnd: { line: endLine, offset: 1 }
         };
         // Create comments
         const comments = [];

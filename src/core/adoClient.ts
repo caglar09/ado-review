@@ -126,7 +126,8 @@ export class ADOClient {
       },
       timeout: 60000, // Increased timeout to 60 seconds
       maxRedirects: 5,
-      validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+      // Treat only 2xx as success; let 4xx/5xx throw so we can surface detailed errors
+      validateStatus: (status) => status >= 200 && status < 300
     });
 
     // Add request/response interceptors for logging
@@ -314,7 +315,18 @@ export class ADOClient {
       } else {
         // New mode: ADOCommentThread object
         this.logger.debug(`Creating comment thread from ADOCommentThread object`);
-        requestBody = threadOrFilePath;
+        // Sanitize line numbers to be >= 1
+        const safeThread = { ...threadOrFilePath } as ADOCommentThread;
+        if (safeThread.threadContext) {
+          const startLine = Math.max(1, safeThread.threadContext.rightFileStart?.line || 1);
+          const endLine = Math.max(startLine, safeThread.threadContext.rightFileEnd?.line || startLine);
+          safeThread.threadContext = {
+            ...safeThread.threadContext,
+            rightFileStart: { line: startLine, offset: 1 },
+            rightFileEnd: { line: endLine, offset: 1 }
+          };
+        }
+        requestBody = safeThread;
       }
 
       const response: AxiosResponse<CommentThread> = await this.client.post(
@@ -327,14 +339,18 @@ export class ADOClient {
         }
       );
 
-      this.logger.debug(`Successfully created comment thread ${response.data.id}`);
+      this.logger.debug(`Successfully created comment thread ${response.data?.id}`);
       return response.data;
     } catch (error) {
+      const resp = (error as any).response;
+      const data = resp?.data;
+      const message = data?.message || (data?.error?.message) || (error as Error).message;
+      this.logger.error(`Failed to create comment thread: HTTP ${resp?.status} ${resp?.statusText} - ${message}`);
       throw this.errorHandler.createFromHttpResponse(
         {
-          status: (error as any).response?.status || 500,
-          statusText: (error as any).response?.statusText || 'Unknown Error',
-          data: (error as any).response?.data
+          status: resp?.status || 500,
+          statusText: resp?.statusText || 'Unknown Error',
+          data
         },
         {
           operation: 'createCommentThread',

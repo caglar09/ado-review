@@ -39,6 +39,13 @@ review:
   maxTableFindings: 20
   maxDiffLineLength: 120
   contextLines: 3
+  # Default rules paths (glob/file). These are merged with CLI --rules.
+  rules:
+    - "./rules/**/*.yaml"
+    - "./rules/**/*.yml"
+    - "./docs/**/*.md"
+  # Optional project-wide rules file
+  projectRules: "./project-rules.yaml"
 
 # File Processing Configuration
 files:
